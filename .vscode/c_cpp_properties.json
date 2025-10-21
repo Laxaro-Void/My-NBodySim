@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "cStandard": "c23",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "linux-clang-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "recursiveIncludes": {
+                "order": "depthFirst"
+            }
+        }
+    ],
+    "version": 4
+}

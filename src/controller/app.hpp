@@ -1,6 +1,14 @@
 #pragma once
 #include "../config.hpp"
 
+#include "../components/camera_component.hpp"
+#include "../components/render_component.hpp"
+#include "../components/transform_component.hpp"
+
+#include "../systems/camera_system.hpp"
+#include "../systems/motion_system.hpp"
+#include "../systems/render_system.hpp"
+
 class App {
 public:
   App();
@@ -8,7 +16,7 @@ public:
 
   void run();
   unsigned int make_entity();
-  unsigned int make_sphere_mesh(float R, int sectorCount, int stackCount);
+  RenderComponent make_sphere_mesh(float R, int sectorCount, int stackCount);
 
   void set_up_opengl();
   void make_systems();
@@ -19,6 +27,9 @@ public:
 
   // Components
   unsigned int cameraID;
+  std::unordered_map<unsigned int, RenderComponent> renderComponents;
+  std::unordered_map<unsigned int, TransformComponent> transformComponents;
+  std::unordered_map<unsigned int, CameraComponent> cameraComponents;
 
 private:
   void set_up_glfw();
@@ -26,13 +37,12 @@ private:
   unsigned int entity_count = 0;
   GLFWwindow* window;
 
-  std::vector<unsigned int> VAOs;
-  std::vector<unsigned int> VBOs;
-  // std::vector<unsigned int> textures;
-
   unsigned int shader;
 
   // Systems
+  RenderSystem *renderSystem;
+  CameraSystem *cameraSystem;
+  MotionSystem *motionSystem;
 };
 
-extern App app;
+extern App* app;

@@ -3,7 +3,10 @@
 #include <GLFW/glfw3.h>
 
 // Stdc++
-#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <unordered_map>
 
 // ImGUI
 #include <imgui/imgui.h>
