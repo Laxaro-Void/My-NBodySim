@@ -9,6 +9,8 @@
 #include "../systems/motion_system.hpp"
 #include "../systems/render_system.hpp"
 
+#include "../view/shader.hpp"
+
 class App {
 public:
   App();
@@ -16,7 +18,11 @@ public:
 
   void run();
   unsigned int make_entity();
-  RenderComponent make_sphere_mesh(float R, int sectorCount, int stackCount);
+  RenderComponent make_sphere_mesh(
+    GLfloat R, 
+    GLint sectorCount, 
+    GLint stackCount, 
+    unsigned int shader);
 
   void set_up_opengl();
   void make_systems();
@@ -28,8 +34,9 @@ public:
   // Components
   unsigned int cameraID;
   std::unordered_map<unsigned int, RenderComponent> renderComponents;
-  std::unordered_map<unsigned int, TransformComponent> transformComponents;
   std::unordered_map<unsigned int, CameraComponent> cameraComponents;
+  std::unordered_map<unsigned int, TransformComponent> transformComponents;
+  std::unordered_map<unsigned int, PhysicsComponent> physicsComponents;
 
 private:
   void set_up_glfw();
@@ -37,7 +44,7 @@ private:
   unsigned int entity_count = 0;
   GLFWwindow* window;
 
-  unsigned int shader;
+  std::vector<unsigned int> Shaders;
 
   // Systems
   RenderSystem *renderSystem;

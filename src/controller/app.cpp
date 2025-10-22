@@ -1,19 +1,24 @@
 #include "app.hpp"
-#include "systems/render_system.hpp"
-#include "components/render_component.hpp"
 
-App::App()
-{
+
+App::App() {
 	set_up_glfw();
 }
 
-App::~App()
-{
+App::~App() {
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
 
-RenderComponent App::make_sphere_mesh(GLfloat R, GLint sectorCount, GLint stackCount)
+unsigned int App::make_entity() {
+	return entity_count++;
+}
+
+RenderComponent App::make_sphere_mesh(
+	GLfloat R,
+	GLint sectorCount,
+	GLint stackCount,
+	unsigned int shader)
 {
 	auto linspace = [](GLfloat start, GLfloat end, GLuint size)
 	{
@@ -99,18 +104,59 @@ RenderComponent App::make_sphere_mesh(GLfloat R, GLint sectorCount, GLint stackC
 
 	sphere.vertex = vertex;
 	sphere.indexs = indexs;
-
 	
+	renderSystem->uploadVertexData(sphere);
+
+	sphere.shader = shader;
 
 	return sphere;
 }
 
-void App::run()
-{
+void App::run() {
+	// Create Shader
+	Shaders.push_back(compile_shader("../shaders/sphere.vert", "../shaders/sphere.frag"));
+
+	// Create Camera Entity
+	cameraID = make_entity();
+	transformComponents[cameraID] = TransformComponent{
+		.position = glm::vec3(0.0f, 0.0f, 3.0f),
+		.eulers = glm::vec3(0.0f),
+		.scale = glm::vec3(1.0f),
+		.shearX = glm::vec2(0.0f),
+		.shearY = glm::vec2(0.0f),
+		.shearZ = glm::vec2(0.0f),
+	};
+	cameraComponents[cameraID] = CameraComponent{
+		.up = glm::vec3(0.0f, 0.5f, 0.0f),
+		.projection = glm::perspective(glm::radians(45.0f), (float)Width / (float)Height, 0.1f, 100.0f),
+		.view = glm::mat4(1.0f),
+		.FOV = 45.0f,
+		.nearPlane = 0.1f,
+		.farPlane = 100.0f,
+		.nearPlane_height = glm::tan(glm::radians(45.0f) / 2.0f) * 0.1f,
+		.aspect_ratio = (float)Width / (float)Height,
+		.speed = 2.5f,
+		.sensitivity = 100.0f,
+		.firstClick = true,
+	};
+
+	// Create a sphere entity
+	unsigned int sphereEntity = make_entity();
+	renderComponents[sphereEntity] = make_sphere_mesh(1.0f, 36, 18, Shaders[0]);
+	transformComponents[sphereEntity] = TransformComponent{
+		.position = glm::vec3(0.0f, 0.0f, -5.0f),
+		.eulers = glm::vec3(0.0f),
+		.scale = glm::vec3(1.0f),
+		.shearX = glm::vec2(0.0f),
+		.shearY = glm::vec2(0.0f),
+		.shearZ = glm::vec2(0.0f),
+	};
+
 	while (!glfwWindowShouldClose(window))
 	{
-		glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		motionSystem->update(transformComponents, physicsComponents, 16.67f/1000.0f);
+		cameraSystem->update(transformComponents, cameraID, cameraComponents, 16.67f/1000.0f);
+		renderSystem->update(transformComponents, renderComponents);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -174,6 +220,6 @@ void App::set_up_opengl()
 
 void App::make_systems() {
   motionSystem = new MotionSystem();
-  cameraSystem = new CameraSystem(shader, window);
-  renderSystem = new RenderSystem(shader, window);
+  cameraSystem = new CameraSystem(&Shaders, window);
+  renderSystem = new RenderSystem(&Shaders, window);
 }

@@ -6,14 +6,14 @@
 class CameraSystem {
 public:
 
-    CameraSystem(unsigned int shader, GLFWwindow* window);
+    CameraSystem(std::vector<unsigned int>* shader, GLFWwindow* window);
     
     bool update(
         std::unordered_map<unsigned int,TransformComponent> &transformComponents,
-        unsigned int cameraID, CameraComponent& cameraComponent, float dt);
+        unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponent, float dt);
     
 private:
-    unsigned int viewLocation;
+    std::vector<unsigned int> *Shaders;
     glm::vec3 global_up = {0.0f, 0.0f, 1.0f};
     GLFWwindow* window;
 };

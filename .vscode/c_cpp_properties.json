@@ -13,6 +13,21 @@
             "recursiveIncludes": {
                 "order": "depthFirst"
             }
+        },
+        {
+            "name": "Windows",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/msys64/ucrt64/include/GLFW"
+            ],
+            "defines": [],
+            "cStandard": "c23",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "linux-clang-x64",
+            "compilerPath": "/msys64/ucrt64/bin/gcc.exe",
+            "recursiveIncludes": {
+                "order": "depthFirst"
+            }
         }
     ],
     "version": 4
