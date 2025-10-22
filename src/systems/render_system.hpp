@@ -7,11 +7,12 @@
 class RenderSystem
 {
 public:
-    RenderSystem(std::vector<unsigned int> *shader, GLFWwindow *window);
+    RenderSystem(GLFWwindow *window);
 
     void update(
         std::unordered_map<unsigned int, TransformComponent> &transformComponents,
-        std::unordered_map<unsigned int, RenderComponent> &renderComponents
+        std::unordered_map<unsigned int, RenderComponent> &renderComponents,
+        std::vector<unsigned int> &Shaders
     );
 
     void uploadVertexData(RenderComponent &renderComponent);
@@ -37,7 +38,6 @@ public:
     void deleteEBO(unsigned int ID);
 
 private:
-    std::vector<unsigned int> *Shaders;
     GLFWwindow *window;
 };
 

@@ -1,26 +1,54 @@
 #include "render_system.hpp"
 
-RenderSystem::RenderSystem(std::vector<unsigned int> *shader, GLFWwindow *window) {
-	this->Shaders = Shaders;
+RenderSystem::RenderSystem(GLFWwindow *window) {
 	this->window = window;
 }
 
 void RenderSystem::update(
 	std::unordered_map<unsigned int, TransformComponent> &transformComponents,
-	std::unordered_map<unsigned int, RenderComponent> &renderComponents) {
+	std::unordered_map<unsigned int, RenderComponent> &renderComponents,
+	std::vector<unsigned int> &Shaders) {
 	/*
 		Update and render all entities with TransformComponent and RenderComponent
 	*/
-	glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
+	glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	for (std::pair<unsigned int, RenderComponent> entity : renderComponents)
 	{
 		TransformComponent &transform = transformComponents[entity.first];
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, transform.position);
-		model = glm::rotate(model, glm::radians(transform.eulers.z), {0.0f, 0.0f, 1.0f});
+
+		// Initialize matrices
+		glm::mat4 matrix = glm::mat4(1.0f);
+		glm::mat4 trans = glm::mat4(1.0f);
+		glm::mat4 rot = glm::mat4(1.0f);
+		glm::mat4 sca = glm::mat4(1.0f);
+		glm::mat4 shrX = glm::mat4(1.0f);
+		glm::mat4 shrY = glm::mat4(1.0f);
+		glm::mat4 shrZ = glm::mat4(1.0f);
+
+		// Transform the matrices to their correct form
+		trans = glm::translate(trans, transform.position);
+		rot = glm::rotate(rot, glm::radians(transform.eulers.x), {1.0f, 0.0f, 0.0f});
+		rot = glm::rotate(rot, glm::radians(transform.eulers.y), {0.0f, 1.0f, 0.0f});
+		rot = glm::rotate(rot, glm::radians(transform.eulers.z), {0.0f, 0.0f, 1.0f});
+		sca = glm::scale(sca, transform.scale);
+		shrX = glm::shearX3D(shrX, transform.shearX[0], transform.shearX[1]);
+		shrY = glm::shearY3D(shrX, transform.shearY[0], transform.shearY[1]);
+		shrZ = glm::shearZ3D(shrX, transform.shearZ[0], transform.shearZ[1]);
+
+		glm::mat4 model = matrix * trans * sca * shrX * shrY * shrZ;
+		glm::mat4 norm = glm::transpose(glm::inverse(matrix * rot * sca * shrX * shrY * shrZ));
+
+		unsigned int shaderID = entity.second.shader;
+		activate_shader(shaderID);
+		set_shader_Mat4(shaderID, "modelMatrix", model);
+		set_shader_Mat4(shaderID, "normalMatrix", norm);
+
+		bindVAO(entity.second.VAO);
+		glDrawElements(GL_TRIANGLES, entity.second.indexs.size(), GL_UNSIGNED_INT, 0);
 	}
+
 	glfwSwapBuffers(window);
 }
 

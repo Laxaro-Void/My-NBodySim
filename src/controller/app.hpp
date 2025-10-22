@@ -38,13 +38,14 @@ public:
   std::unordered_map<unsigned int, TransformComponent> transformComponents;
   std::unordered_map<unsigned int, PhysicsComponent> physicsComponents;
 
+  std::vector<unsigned int> Shaders;
+  
 private:
   void set_up_glfw();
 
   unsigned int entity_count = 0;
   GLFWwindow* window;
 
-  std::vector<unsigned int> Shaders;
 
   // Systems
   RenderSystem *renderSystem;

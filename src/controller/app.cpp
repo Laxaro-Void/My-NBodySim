@@ -113,14 +113,14 @@ RenderComponent App::make_sphere_mesh(
 }
 
 void App::run() {
-	// Create Shader
-	Shaders.push_back(compile_shader("../shaders/sphere.vert", "../shaders/sphere.frag"));
+	// Create Shader src/shaders/sphere.vert
+	Shaders.push_back(compile_shader("../src/shaders/sphere.vert", "../src/shaders/sphere.frag"));
 
 	// Create Camera Entity
 	cameraID = make_entity();
 	transformComponents[cameraID] = TransformComponent{
-		.position = glm::vec3(0.0f, 0.0f, 3.0f),
-		.eulers = glm::vec3(0.0f),
+		.position = glm::vec3(1.5f, 2.5f, 2.0f),
+		.eulers = glm::vec3(-0.5f, -1.25f, -1.0f),
 		.scale = glm::vec3(1.0f),
 		.shearX = glm::vec2(0.0f),
 		.shearY = glm::vec2(0.0f),
@@ -136,29 +136,33 @@ void App::run() {
 		.nearPlane_height = glm::tan(glm::radians(45.0f) / 2.0f) * 0.1f,
 		.aspect_ratio = (float)Width / (float)Height,
 		.speed = 2.5f,
-		.sensitivity = 100.0f,
+		.sensitivity = 75.0f,
 		.firstClick = true,
 	};
+	if (DEBUG) std::clog << "Camera Created" << '\n';
 
 	// Create a sphere entity
 	unsigned int sphereEntity = make_entity();
-	renderComponents[sphereEntity] = make_sphere_mesh(1.0f, 36, 18, Shaders[0]);
+	renderComponents[sphereEntity] = make_sphere_mesh(0.5f, 34, 18, Shaders[0]);
 	transformComponents[sphereEntity] = TransformComponent{
-		.position = glm::vec3(0.0f, 0.0f, -5.0f),
+		.position = glm::vec3(0.0f, 0.0f, 0.0f),
 		.eulers = glm::vec3(0.0f),
 		.scale = glm::vec3(1.0f),
 		.shearX = glm::vec2(0.0f),
 		.shearY = glm::vec2(0.0f),
 		.shearZ = glm::vec2(0.0f),
 	};
+	if (DEBUG) std::clog << "Sphere Created" << '\n';
 
 	while (!glfwWindowShouldClose(window))
 	{
 		motionSystem->update(transformComponents, physicsComponents, 16.67f/1000.0f);
-		cameraSystem->update(transformComponents, cameraID, cameraComponents, 16.67f/1000.0f);
-		renderSystem->update(transformComponents, renderComponents);
+		cameraSystem->update(transformComponents, cameraID, cameraComponents, Shaders, 16.67f/1000.0f);
+		renderSystem->update(transformComponents, renderComponents, Shaders);
 
-		glfwSwapBuffers(window);
+		if (DEBUG) std::clog << "CameraPos: " << transformComponents[cameraID].position << '\n';
+		if (DEBUG) std::clog << "CameraLok: " << transformComponents[cameraID].eulers << '\n';
+		
 		glfwPollEvents();
 	}
 }
@@ -212,6 +216,10 @@ void App::set_up_opengl()
 	glViewport(0, 0, Width, Height);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+	
+	glfwSetCursorPos(window, Width/2, Height/2);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 	// Enable 3D
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -220,6 +228,6 @@ void App::set_up_opengl()
 
 void App::make_systems() {
   motionSystem = new MotionSystem();
-  cameraSystem = new CameraSystem(&Shaders, window);
-  renderSystem = new RenderSystem(&Shaders, window);
+  cameraSystem = new CameraSystem(window);
+  renderSystem = new RenderSystem(window);
 }

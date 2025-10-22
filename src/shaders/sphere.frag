@@ -6,11 +6,10 @@ out vec4 FragColor;
 // Imports the current position from the Vertex Shader
 in vec3 crntPos;
 // Imports the normal from the Vertex Shader
-in vec3 Normal;
+in vec3 normal;
 // Imports the color from the Vertex Shader
 in vec3 color;
 
-in vec2 texCoord;
 
 // Gets the color of the light from the main function
 uniform vec4 lightColor;

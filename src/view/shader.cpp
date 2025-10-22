@@ -28,20 +28,20 @@ unsigned int compile_shader(const char* vertexFile, const char* fragmentFile)
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vShaderCode, NULL);
     glCompileShader(vertexShader);
-    compile_shader(vertexShader, "VERTEX");
+    shader_compileErrors(vertexShader, "VERTEX");
 
     // Compile Fragment Shader
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fShaderCode, NULL);
     glCompileShader(fragmentShader);
-    compile_shader(fragmentShader, "FRAGMENT");
+    shader_compileErrors(fragmentShader, "FRAGMENT");
 
     // Link Shaders
     unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-    compile_shader(shaderProgram, "PROGRAM");
+    shader_compileErrors(shaderProgram, "PROGRAM");
 
     // Delete the shaders as they're linked into our program now and no longer necessary
     glDeleteShader(vertexShader);
@@ -94,7 +94,7 @@ void set_shader_Mat4(unsigned int shaderID, const std::string &name, const glm::
     glUniformMatrix4fv(glGetUniformLocation(shaderID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
-void compile_shader(unsigned int shaderID, const char* type)
+void shader_compileErrors(unsigned int shaderID, const char* type)
 {
 	// Stores status of compilation
 	GLint hasCompiled;
