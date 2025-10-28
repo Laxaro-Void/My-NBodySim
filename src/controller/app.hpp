@@ -18,10 +18,16 @@ public:
 
   void run();
   unsigned int make_entity();
+  void delete_entity(unsigned int ID);
   RenderComponent make_sphere_mesh(
     GLfloat R, 
     GLint sectorCount, 
     GLint stackCount, 
+    unsigned int shader);
+
+  RenderComponent make_circle_mesh(
+    GLfloat R,
+    GLint sectorCount,
     unsigned int shader);
 
   void set_up_opengl();
@@ -43,9 +49,13 @@ public:
 private:
   void set_up_glfw();
 
-  unsigned int entity_count = 0;
-  GLFWwindow* window;
+  // Entitys
+  std::queue<unsigned int> freeEntity;
+  unsigned int activeEntitys = 0;
+  unsigned int leastEntity = 0;
 
+  // Window
+  GLFWwindow* window;
 
   // Systems
   RenderSystem *renderSystem;

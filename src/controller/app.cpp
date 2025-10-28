@@ -11,7 +11,26 @@ App::~App() {
 }
 
 unsigned int App::make_entity() {
-	return entity_count++;
+	if (freeEntity.empty())
+	{
+		activeEntitys++;
+		return leastEntity++;
+	}
+	else
+	{
+		activeEntitys++;
+		unsigned int newID = freeEntity.front();
+		freeEntity.pop();
+		return newID;
+	}
+}
+
+void App::delete_entity(unsigned int ID) {
+	// Clear Component
+	// TODO
+
+	freeEntity.push(ID);
+	activeEntitys--;
 }
 
 RenderComponent App::make_sphere_mesh(
@@ -112,6 +131,78 @@ RenderComponent App::make_sphere_mesh(
 	return sphere;
 }
 
+RenderComponent App::make_circle_mesh(
+    GLfloat R,
+    GLint sectorCount,
+    unsigned int shader) {
+	
+	auto linspace = [](GLfloat start, GLfloat end, GLuint size)
+	{
+		std::vector<GLfloat> result;
+		GLfloat step = (end - start) / (size - 1);
+		for (GLuint i = 0; i < size; ++i)
+			result.push_back(start + i * step);
+
+		return result;
+	};
+
+	RenderComponent sphere;
+	glm::vec3 color = glm::vec3(1.0f);
+	std::vector<GLfloat> radial = linspace(0.0f, 2.0f * glm::acos(-1), sectorCount + 1); // phi =  [0, 2PI]
+	
+	std::vector<Vertex> vertex;
+	std::vector<GLuint> indexs;
+
+	auto f_x = [](GLfloat r, GLfloat phi)
+	{
+		return r * glm::cos(phi);
+	};
+	auto f_y = [](GLfloat r, GLfloat phi)
+	{
+		return r * glm::sin(phi);
+	};
+
+	vertex.push_back({glm::vec3(0.0f), color, glm::vec3(0.0f, 0.0f, 1.0f)});
+
+	for (GLuint j = 0; j < radial.size() - 1; j++)
+	{
+		GLfloat phi = radial[j];
+
+		glm::vec3 pos = glm::vec3(f_x(R, phi), f_y(R, phi), 1.0f);
+		glm::vec3 norm = glm::normalize(pos);
+
+		vertex.push_back({pos, color, norm, glm::vec2(1.0f)});
+	}
+
+	for (GLuint j = 1; j < vertex.size(); j++)
+	{
+		GLuint a = 0, b, c;
+		if (j == vertex.size() - 1)
+		{
+			b = j;
+			c = 1;
+		}
+		else
+		{
+			b = j;
+			c = j+1;
+		}
+
+		indexs.push_back(a);
+		indexs.push_back(c);
+		indexs.push_back(b);
+	}
+
+	sphere.vertex = vertex;
+	sphere.indexs = indexs;
+	
+	renderSystem->uploadVertexData(sphere);
+
+	sphere.shader = shader;
+
+	return sphere;
+	}
+
 void App::run() {
 	// Create Shader src/shaders/sphere.vert
 	Shaders.push_back(compile_shader("../src/shaders/sphere.vert", "../src/shaders/sphere.frag"));
@@ -162,7 +253,8 @@ void App::run() {
 
 		if (DEBUG) std::clog << "CameraPos: " << transformComponents[cameraID].position << '\n';
 		if (DEBUG) std::clog << "CameraLok: " << transformComponents[cameraID].eulers << '\n';
-		
+		if (DEBUG) std::clog << "Window Side: " << Width << ", " << Height << '\n';
+
 		glfwPollEvents();
 	}
 }
