@@ -168,7 +168,7 @@ RenderComponent App::make_circle_mesh(
 	{
 		GLfloat phi = radial[j];
 
-		glm::vec3 pos = glm::vec3(f_x(R, phi), f_y(R, phi), 1.0f);
+		glm::vec3 pos = glm::vec3(f_x(R, phi), f_y(R, phi), 0.0f);
 		glm::vec3 norm = glm::normalize(pos);
 
 		vertex.push_back({pos, color, norm, glm::vec2(1.0f)});
@@ -203,6 +203,52 @@ RenderComponent App::make_circle_mesh(
 	return sphere;
 	}
 
+RenderComponent App::make_bounding_box(
+    GLfloat width,
+    GLfloat height,
+    GLfloat thickness,
+    unsigned int shader
+    )
+{
+	RenderComponent box;
+	glm::vec3 color = glm::vec3(1.0f);
+	
+	std::vector<Vertex> vertex;
+	std::vector<GLuint> indexs;
+
+	std::vector<GLfloat> dx = {1.0f, 1.0f, -1.0f, -1.0f};
+	std::vector<GLfloat> dy = {1.0f, -1.0f, -1.0f, 1.0f};
+	std::vector<GLfloat> dt = {0.0f, 1.0f};
+	
+	for (int t = 0; t < 2; t++)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			vertex.push_back({glm::vec3(dx[i]*(width/2.0f + dt[t]*thickness), dy[i]*(height/2.0f + dt[t]*thickness), 0.0f), color, glm::normalize(glm::vec3(dx[i]*width, dy[i]*height, 0.0f)), glm::vec2(1.0f)});
+		}
+	}
+	
+	indexs = {
+		0, 4, 5,
+		0, 5, 1,
+		1, 5, 6,
+		1, 6, 2,
+		2, 6, 7,
+		2, 7, 3,
+		3, 7, 4,
+		3, 4, 0
+	};
+
+	box.vertex = vertex;
+	box.indexs = indexs;
+	
+	renderSystem->uploadVertexData(box);
+
+	box.shader = shader;
+
+	return box;
+}
+
 void App::run() {
 	// Create Shader src/shaders/sphere.vert
 	Shaders.push_back(compile_shader("../src/shaders/sphere.vert", "../src/shaders/sphere.frag"));
@@ -210,8 +256,8 @@ void App::run() {
 	// Create Camera Entity
 	cameraID = make_entity();
 	transformComponents[cameraID] = TransformComponent{
-		.position = glm::vec3(1.5f, 2.5f, 2.0f),
-		.eulers = glm::vec3(-0.5f, -1.25f, -1.0f),
+		.position = glm::vec3(0.0f, 0.0f, 30.0f),
+		.eulers = glm::vec3(0.0f, 0.0f, -1.0f),
 		.scale = glm::vec3(1.0f),
 		.shearX = glm::vec2(0.0f),
 		.shearY = glm::vec2(0.0f),
@@ -226,6 +272,7 @@ void App::run() {
 		.farPlane = 100.0f,
 		.nearPlane_height = glm::tan(glm::radians(45.0f) / 2.0f) * 0.1f,
 		.aspect_ratio = (float)Width / (float)Height,
+		.zoom = 1.0f,
 		.speed = 2.5f,
 		.sensitivity = 75.0f,
 		.firstClick = true,
@@ -233,9 +280,9 @@ void App::run() {
 	if (DEBUG) std::clog << "Camera Created" << '\n';
 
 	// Create a sphere entity
-	unsigned int sphereEntity = make_entity();
-	renderComponents[sphereEntity] = make_sphere_mesh(0.5f, 34, 18, Shaders[0]);
-	transformComponents[sphereEntity] = TransformComponent{
+	unsigned int circleEntity = make_entity();
+	renderComponents[circleEntity] = make_circle_mesh(50.0f, 34, Shaders[0]);
+	transformComponents[circleEntity] = TransformComponent{
 		.position = glm::vec3(0.0f, 0.0f, 0.0f),
 		.eulers = glm::vec3(0.0f),
 		.scale = glm::vec3(1.0f),
@@ -243,17 +290,44 @@ void App::run() {
 		.shearY = glm::vec2(0.0f),
 		.shearZ = glm::vec2(0.0f),
 	};
-	if (DEBUG) std::clog << "Sphere Created" << '\n';
+	physicsComponents[circleEntity] = PhysicsComponent{
+		.velocity = glm::vec3(0.0f),
+		.mass = 10.0f
+	};
+	if (DEBUG) std::clog << "Cricle Created" << '\n';
+
+	// Create Bounding box
+	unsigned int boxEntity = make_entity();
+	renderComponents[boxEntity] = make_bounding_box(600.0f, 300.0f, 10.0f, Shaders[0]);
+	transformComponents[boxEntity] = TransformComponent{
+		.position = glm::vec3(0.0f),
+		.eulers = glm::vec3(0.0f),
+		.scale = glm::vec3(1.0f),
+		.shearX = glm::vec2(0.0f),
+		.shearY = glm::vec2(0.0f),
+		.shearZ = glm::vec2(0.0f),
+	};
+	if (DEBUG) std::clog << "Box Created" << '\n';
+
+	float dt = 16.67f/1000.0f;
+	float time = 0.0f;
+
+	std::vector<unsigned int> circles = {circleEntity};
 
 	while (!glfwWindowShouldClose(window))
 	{
-		motionSystem->update(transformComponents, physicsComponents, 16.67f/1000.0f);
-		cameraSystem->update(transformComponents, cameraID, cameraComponents, Shaders, 16.67f/1000.0f);
+		motionSystem->update(transformComponents, physicsComponents, dt);
+		motionSystem->updateGravity(transformComponents, physicsComponents, dt, circles);
+		cameraSystem->update2D(transformComponents, cameraID, cameraComponents, Shaders, dt);
 		renderSystem->update(transformComponents, renderComponents, Shaders);
 
-		if (DEBUG) std::clog << "CameraPos: " << transformComponents[cameraID].position << '\n';
-		if (DEBUG) std::clog << "CameraLok: " << transformComponents[cameraID].eulers << '\n';
-		if (DEBUG) std::clog << "Window Side: " << Width << ", " << Height << '\n';
+		// if (DEBUG) std::clog << "CirclePos: " << circle.position << '\n';
+		// if (DEBUG) std::clog << "Camera Pos: " << transformComponents[cameraID].position << '\n';
+		// if (DEBUG) std::clog << "Window Side: " << Width << ", " << Height << '\n';
+		// if (DEBUG) std::clog << "Mouse Pos: " << mouse.x_pos << ", " << mouse.y_pos << '\n';
+
+		mouse.updateMouseButton(window);
+		mouse.updateMousePosition(window);
 
 		glfwPollEvents();
 	}
@@ -308,9 +382,8 @@ void App::set_up_opengl()
 	glViewport(0, 0, Width, Height);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	
 	glfwSetCursorPos(window, Width/2, Height/2);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 	// Enable 3D
 	glEnable(GL_DEPTH_TEST);

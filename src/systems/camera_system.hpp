@@ -10,13 +10,23 @@ public:
 
     CameraSystem(GLFWwindow* window);
     
-    bool update(
+    bool update3D(
         std::unordered_map<unsigned int,TransformComponent> &transformComponents,
         unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponent, 
         std::vector<unsigned int> &Shaders, float dt);
+
+    bool update2D(
+        std::unordered_map<unsigned int,TransformComponent> &transformComponents,
+        unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponents, 
+        std::vector<unsigned int> &Shaders, float dt);
     
-    
-    void Inputs(
+    void Inputs3D(
+        std::unordered_map<unsigned int,TransformComponent> &transformComponents,
+        unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponent,
+        float dt
+    );
+
+    void Inputs2D(
         std::unordered_map<unsigned int,TransformComponent> &transformComponents,
         unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponent,
         float dt

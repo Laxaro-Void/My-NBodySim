@@ -10,4 +10,9 @@ class MotionSystem {
         std::unordered_map<unsigned int,TransformComponent> &transformComponents,
         std::unordered_map<unsigned int,PhysicsComponent> &physicsComponents,
         float dt);
+
+    void updateGravity(
+        std::unordered_map<unsigned int,TransformComponent> &transformComponents,
+        std::unordered_map<unsigned int,PhysicsComponent> &physicsComponents,
+        float dt, std::vector<unsigned int> &entityIDs);
 };

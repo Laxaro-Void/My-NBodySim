@@ -4,7 +4,7 @@ CameraSystem::CameraSystem(GLFWwindow *window) {
     this->window = window;
 }
 
-bool CameraSystem::update(
+bool CameraSystem::update3D(
     std::unordered_map<unsigned int,TransformComponent> &transformComponents,
     unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponents, 
     std::vector<unsigned int> &Shaders, float dt)
@@ -29,13 +29,47 @@ bool CameraSystem::update(
         set_shader_Mat4(shaderID, "camMatrix", cameraMatrix);
     }
     
-    this->Inputs(transformComponents, cameraID, cameraComponents, dt);
+    this->Inputs3D(transformComponents, cameraID, cameraComponents, dt);
 
     return false;
 }
 
+bool CameraSystem::update2D(
+	std::unordered_map<unsigned int,TransformComponent> &transformComponents,
+    unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponents, 
+    std::vector<unsigned int> &Shaders, float dt
+)
+{
+	TransformComponent &cameraTransformComponent = transformComponents[cameraID];
+	CameraComponent &cameraComponent = cameraComponents[cameraID];
 
-void CameraSystem::Inputs(
+	int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+	GLfloat x = cameraTransformComponent.position.x;
+	GLfloat y = cameraTransformComponent.position.y;
+
+	cameraComponent.view = glm::lookAt(cameraTransformComponent.position, cameraTransformComponent.position + cameraTransformComponent.eulers, glm::vec3(0.0f, 1.0f, 0.0f));
+	cameraComponent.projection = glm::ortho(x - float(width)/2.0f, x + float(width)/2.0f, y - float(height)/2.0f, y + float(height)/2.0f, 0.1f, 100.0f);
+
+	glm::mat4 zoomMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(cameraComponent.zoom));
+
+	glm::mat4 cameraMatrix = cameraComponent.projection * cameraComponent.view * zoomMatrix;
+
+	for(unsigned int &shaderID : Shaders)
+    {
+        activate_shader(shaderID);
+        set_shader_Vec3(shaderID, "camPos", cameraTransformComponent.position);
+        set_shader_Mat4(shaderID, "camMatrix", cameraMatrix);
+    }
+
+	this->Inputs2D(transformComponents, cameraID, cameraComponents, dt);
+
+	return true;
+}
+
+
+void CameraSystem::Inputs3D(
     std::unordered_map<unsigned int,TransformComponent> &transformComponents,
     unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponents, float dt)
 {
@@ -133,5 +167,46 @@ void CameraSystem::Inputs(
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		// Makes sure the next time the camera looks around it doesn't jump
 		firstClick = true;
+	}
+}
+
+void CameraSystem::Inputs2D(
+	std::unordered_map<unsigned int,TransformComponent> &transformComponents,
+	unsigned int cameraID, std::unordered_map<unsigned int, CameraComponent>& cameraComponents,
+	float dt
+	)
+{
+	TransformComponent &cameraTransformComponent = transformComponents[cameraID];
+    CameraComponent &cameraComponent = cameraComponents[cameraID];
+
+    glm::vec3 &Position = cameraTransformComponent.position;
+    glm::vec3 &Orientation = cameraTransformComponent.eulers;
+    glm::vec3 &Up = cameraComponent.up;
+
+	float &zoom = cameraComponent.zoom;
+
+    bool &firstClick = cameraComponent.firstClick;
+    float &sensitivity = cameraComponent.sensitivity;
+    float &speed = cameraComponent.speed;
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		zoom += speed;
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		zoom += -speed;
+		zoom = glm::clamp(zoom, 0.5f, 10.0f);
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	{
+		speed = 2.0f * dt;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
+	{
+		speed = 0.75f * dt;
 	}
 }

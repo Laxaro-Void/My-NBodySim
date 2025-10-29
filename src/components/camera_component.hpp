@@ -8,6 +8,8 @@ struct CameraComponent {
     float FOV, nearPlane, farPlane;
     float nearPlane_height, aspect_ratio;
 
+    float zoom;
+
     float speed;
     float sensitivity;
 
