@@ -40,6 +40,7 @@ public:
     unsigned int shader
   );
   
+  void load_scene(const char* path);
 
   void set_up_opengl();
   void make_systems();
