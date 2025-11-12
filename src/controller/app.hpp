@@ -4,6 +4,7 @@
 #include "../components/camera_component.hpp"
 #include "../components/render_component.hpp"
 #include "../components/transform_component.hpp"
+#include "../components/physics_component.hpp"
 
 #include "../systems/camera_system.hpp"
 #include "../systems/motion_system.hpp"
@@ -40,7 +41,7 @@ public:
     unsigned int shader
   );
   
-  void load_scene(const char* path);
+  RenderComponent load_scene(const char* path, unsigned int shader);
 
   void set_up_opengl();
   void make_systems();
@@ -55,6 +56,10 @@ public:
   std::unordered_map<unsigned int, CameraComponent> cameraComponents;
   std::unordered_map<unsigned int, TransformComponent> transformComponents;
   std::unordered_map<unsigned int, PhysicsComponent> physicsComponents;
+
+  unsigned int particlesInstanceID;
+  std::vector<TransformComponent> particlesTranform;
+  std::vector<PhysicsComponent> particlesPhysics;
 
   std::vector<unsigned int> Shaders;
   

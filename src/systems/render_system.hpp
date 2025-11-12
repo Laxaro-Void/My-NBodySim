@@ -15,7 +15,19 @@ public:
         std::vector<unsigned int> &Shaders
     );
 
+    void drawStatic(
+        std::pair<unsigned int, RenderComponent> &entity,
+        TransformComponent &transform
+    );
+
+    void drawInstance(
+        std::pair<unsigned int, RenderComponent> &entity
+    );
+
     void uploadVertexData(RenderComponent &renderComponent);
+    void uploadVertexInstanceData(RenderComponent &renderComponent, std::vector<TransformComponent> &transformComponents);
+
+    void updateVertexInstanceData(RenderComponent &renderComponent, std::vector<TransformComponent> &transformComponents);
 
     void bindVAO(unsigned int ID);
     void bindVBO(unsigned int ID);
@@ -29,9 +41,9 @@ public:
         GLsizeiptr stride, 
         void *offset);
 
-    void unbindVAO(unsigned int ID);
-    void unbindVBO(unsigned int ID);
-    void unbindEBO(unsigned int ID);
+    void unbindVAO();
+    void unbindVBO();
+    void unbindEBO();
 
     void deleteVAO(unsigned int ID);
     void deleteVBO(unsigned int ID);

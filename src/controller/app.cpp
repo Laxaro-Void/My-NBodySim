@@ -249,9 +249,73 @@ RenderComponent App::make_bounding_box(
 	return box;
 }
 
+RenderComponent App::load_scene(const char* path, unsigned int shader) {
+	if (DEBUG) {
+		std::clog << "Loading Scene from: " << path << '\n';
+	}
+	
+	std::ifstream sceneFile(path);
+	if (!sceneFile.is_open()) {
+		std::cerr << "Failed to open scene file: " << path << '\n';
+		exit(EXIT_FAILURE);
+		return RenderComponent{};
+	}
+
+	GLuint N;
+	sceneFile >> N;
+
+	RenderComponent sphereMesh = make_circle_mesh(1.0f, 34, shader);
+	sphereMesh.renderType = RenderType::INSTANCED;
+
+	sphereMesh.instanceSize = N;
+	particlesTranform.resize(N);
+	particlesPhysics.resize(N);
+	
+	GLfloat density = 1.0f;
+	for (GLuint i = 0; i < N; i++) {
+		GLfloat x, y, z = 0.0f;
+		sceneFile >> x >> y;
+
+		GLfloat vx, vy, vz = 0.0f;
+		sceneFile >> vx >> vy;
+
+		GLfloat mass;
+		sceneFile >> mass;
+
+		GLfloat radius = glm::sqrt(mass / (glm::acos(-1) * density));
+
+		if (DEBUG) std::clog << "Particle " << i << ": Pos(" << x << ", " << y << ", " << z << "), Vel(" << vx << ", " << vy << ", " << vz << "), Mass: " << mass << ", Radius: " << radius << '\n';
+
+		particlesTranform[i] = TransformComponent{
+			.position = glm::vec3(x, y, z),
+			.eulers = glm::vec3(0.0f),
+			.scale = glm::vec3(radius),
+			.shearX = glm::vec2(0.0f),
+			.shearY = glm::vec2(0.0f),
+			.shearZ = glm::vec2(0.0f),
+		};
+		particlesPhysics[i] = PhysicsComponent{
+			.velocity = glm::vec3(vx, vy, vz),
+			.acceleration = glm::vec3(0.0f),
+			.mass = mass,
+			.radius = radius,
+		};
+	}
+
+	renderSystem->uploadVertexInstanceData(sphereMesh, particlesTranform);
+
+	if (DEBUG) {
+		std::clog << "Loaded " << N << " particles from scene." << '\n';
+	}
+
+	sceneFile.close();
+	return sphereMesh;
+}
+
 void App::run() {
 	// Create Shader src/shaders/sphere.vert
 	Shaders.push_back(compile_shader("../src/shaders/sphere.vert", "../src/shaders/sphere.frag"));
+	Shaders.push_back(compile_shader("../src/shaders/standar.vert", "../src/shaders/standar.frag"));
 
 	// Create Camera Entity
 	cameraID = make_entity();
@@ -280,25 +344,14 @@ void App::run() {
 	if (DEBUG) std::clog << "Camera Created" << '\n';
 
 	// Create a sphere entity
-	unsigned int circleEntity = make_entity();
-	renderComponents[circleEntity] = make_circle_mesh(50.0f, 34, Shaders[0]);
-	transformComponents[circleEntity] = TransformComponent{
-		.position = glm::vec3(0.0f, 0.0f, 0.0f),
-		.eulers = glm::vec3(0.0f),
-		.scale = glm::vec3(1.0f),
-		.shearX = glm::vec2(0.0f),
-		.shearY = glm::vec2(0.0f),
-		.shearZ = glm::vec2(0.0f),
-	};
-	physicsComponents[circleEntity] = PhysicsComponent{
-		.velocity = glm::vec3(0.0f),
-		.mass = 10.0f
-	};
-	if (DEBUG) std::clog << "Cricle Created" << '\n';
+	particlesInstanceID = make_entity();
+	renderComponents[particlesInstanceID] = load_scene("../scenes/scene_1.txt", Shaders[0]);
+	if (DEBUG) std::clog << "Particles Created" << '\n';
 
 	// Create Bounding box
 	unsigned int boxEntity = make_entity();
-	renderComponents[boxEntity] = make_bounding_box(600.0f, 300.0f, 10.0f, Shaders[0]);
+	renderComponents[boxEntity] = make_bounding_box(1200.0f, 600.0f, 3.0f, Shaders[1]);
+	renderComponents[boxEntity].renderType = RenderType::STATIC;
 	transformComponents[boxEntity] = TransformComponent{
 		.position = glm::vec3(0.0f),
 		.eulers = glm::vec3(0.0f),
@@ -312,13 +365,14 @@ void App::run() {
 	float dt = 16.67f/1000.0f;
 	float time = 0.0f;
 
-	std::vector<unsigned int> circles = {circleEntity};
 
 	while (!glfwWindowShouldClose(window))
 	{
-		motionSystem->update(transformComponents, physicsComponents, dt);
-		motionSystem->updateGravity(transformComponents, physicsComponents, dt, circles);
+		motionSystem->update(particlesTranform, particlesPhysics, dt);
+		motionSystem->updateGravity(particlesTranform, particlesPhysics, dt);
+
 		cameraSystem->update2D(transformComponents, cameraID, cameraComponents, Shaders, dt);
+		renderSystem->uploadVertexInstanceData(renderComponents[particlesInstanceID], particlesTranform);
 		renderSystem->update(transformComponents, renderComponents, Shaders);
 
 		// if (DEBUG) std::clog << "CirclePos: " << circle.position << '\n';

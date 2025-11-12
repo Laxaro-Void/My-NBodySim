@@ -9,6 +9,12 @@ struct Vertex
     glm::vec2 texUV;
 };
 
+enum class RenderType {
+    STATIC,
+    DYNAMIC,
+    INSTANCED
+};
+
 struct RenderComponent {
     std::vector<Vertex> vertex;
     std::vector<GLuint> indexs;
@@ -17,6 +23,10 @@ struct RenderComponent {
     unsigned int VAO;
     unsigned int VBO;
     unsigned int EBO;
-
+    
     unsigned int shader;
+    
+    RenderType renderType;
+    unsigned int instanceSize;
+    unsigned int instanceBuffer;
 };
