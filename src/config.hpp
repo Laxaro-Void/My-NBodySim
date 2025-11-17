@@ -1,6 +1,9 @@
-// Glad, GLFW
+#define CL_TARGET_OPENCL_VERSION 120
+
+// Glad, GLFW, OpenCl
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <CL/cl.h>
 
 // Stdc++
 #include <iostream>
@@ -11,6 +14,7 @@
 #include <map>
 #include <queue>
 #include <unordered_map>
+#include <memory>
 
 // ImGUI
 #include <imgui/imgui.h>

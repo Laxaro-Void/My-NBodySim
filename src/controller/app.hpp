@@ -12,6 +12,18 @@
 
 #include "../view/shader.hpp"
 
+enum class AppState {
+    RUNNING,
+    PAUSED,
+    STOPPED
+};
+
+enum class AppCalculationMode {
+    CPU_ONLY,
+    GPU_CPUCONTROLLER,
+    GPU_ONLY
+};
+
 class App {
 public:
   App();
@@ -66,6 +78,10 @@ public:
 private:
   void set_up_glfw();
 
+  // State
+  AppState state = AppState::RUNNING;
+  AppCalculationMode calculationMode = AppCalculationMode::CPU_ONLY;
+
   // Entitys
   std::queue<unsigned int> freeEntity;
   unsigned int activeEntitys = 0;
@@ -119,6 +135,9 @@ private:
   RenderSystem *renderSystem;
   CameraSystem *cameraSystem;
   MotionSystem *motionSystem;
+
+  // Kernels
+  
 };
 
 extern App* app;

@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Packages
 find_package(OpenGL REQUIRED)
-# find_package(OpenCV REQUIRED)
+find_package(OpenCL REQUIRED)
 find_package(glfw3 REQUIRED)
 
 # Source
