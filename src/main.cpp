@@ -10,7 +10,18 @@ int main (int argc, char *argv[]) {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
 
-  app->run();
+  std::string scenePath = "scene_1.txt";
+  for (int i = 1; i < argc; i+=2)
+  {
+    char *arg = argv[i];
+    if (arg == std::string("--file"))
+    {
+      scenePath = argv[i+1];
+    }
+  }
+  
+
+  app->run(scenePath);
 
   delete app;
 

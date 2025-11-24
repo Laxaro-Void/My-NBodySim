@@ -312,7 +312,7 @@ RenderComponent App::load_scene(const char* path, unsigned int shader) {
 	return sphereMesh;
 }
 
-void App::run() {
+void App::run(std::string scenePath) {
 	// Create Shader src/shaders/sphere.vert
 	Shaders.push_back(compile_shader("../src/shaders/sphere.vert", "../src/shaders/sphere.frag"));
 	Shaders.push_back(compile_shader("../src/shaders/standar.vert", "../src/shaders/standar.frag"));
@@ -345,7 +345,7 @@ void App::run() {
 
 	// Create a sphere entity
 	particlesInstanceID = make_entity();
-	renderComponents[particlesInstanceID] = load_scene("../scenes/scene_1.txt", Shaders[0]);
+	renderComponents[particlesInstanceID] = load_scene(("../scenes/" + scenePath).c_str(), Shaders[0]);
 	if (DEBUG) std::clog << "Particles Created" << '\n';
 
 	// Create Bounding box

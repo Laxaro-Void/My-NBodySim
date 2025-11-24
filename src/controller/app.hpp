@@ -29,7 +29,7 @@ public:
   App();
   ~App();
 
-  void run();
+  void run(std::string scenePath);
   unsigned int make_entity();
   void delete_entity(unsigned int ID);
   RenderComponent make_sphere_mesh(
