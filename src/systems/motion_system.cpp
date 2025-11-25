@@ -23,10 +23,6 @@ void MotionSystem::updateGravity(
     float dt
 )
 {
-    GLfloat G = 6.6743e-11; // m^3 kg^-1 s^-2 (gravitational constant)
-    GLfloat scale = 1e11;    // scale factor to adjust gravitational effect
-    G *= scale;
-
     GLfloat epsilon = 0.1f * 0.1f; // Minimum distance to avoid singularity e^2
 
     std::vector<glm::vec3> accelerations(physicsComponents.size(), glm::vec3(0.0f));
@@ -64,4 +60,62 @@ void MotionSystem::updateGravity(
         PhysicsComponent & physicsComponent = physicsComponents[ID];
         physicsComponent.velocity += accelerations[ID] * dt;
     }
+}
+
+void MotionSystem::updateColision(
+        std::vector<TransformComponent> &transformComponents,
+        std::vector<PhysicsComponent> &physicsComponents,
+        float dt) 
+{
+    std::vector<glm::vec3> velocities(physicsComponents.size(), glm::vec3(0.0f));
+    std::vector<bool> hasCollided(physicsComponents.size(), false);
+
+    for (size_t ID = 0; ID < physicsComponents.size(); ID++)
+    {
+        TransformComponent & trasnformComponent = transformComponents[ID];
+        PhysicsComponent & physicsComponent = physicsComponents[ID];
+
+        for (size_t otherID = ID + 1; otherID < physicsComponents.size(); otherID++)
+        {
+            TransformComponent & otherTransformComponent = transformComponents[otherID];
+            PhysicsComponent & otherPhysicsComponent = physicsComponents[otherID];
+
+            glm::vec3 direction = otherTransformComponent.position - trasnformComponent.position;
+            GLfloat distance = glm::length(direction);
+
+            if (distance < (physicsComponent.radius + otherPhysicsComponent.radius))
+            {
+                glm::vec3 normalDirection = glm::normalize(direction);
+                glm::vec3 tangentDirection = glm::vec3(-normalDirection.y, normalDirection.x, 0.0f);
+
+                GLfloat v1n = glm::dot(physicsComponent.velocity, normalDirection);
+                GLfloat v1t = glm::dot(physicsComponent.velocity, tangentDirection);
+                GLfloat v2n = glm::dot(otherPhysicsComponent.velocity, normalDirection);
+                GLfloat v2t = glm::dot(otherPhysicsComponent.velocity, tangentDirection);
+
+                GLfloat v1nAfter = (v1n * (physicsComponent.mass - otherPhysicsComponent.mass) + 2.0f * otherPhysicsComponent.mass * v2n) / (physicsComponent.mass + otherPhysicsComponent.mass);
+                GLfloat v2nAfter = (v2n * (otherPhysicsComponent.mass - physicsComponent.mass) + 2.0f * physicsComponent.mass * v1n) / (physicsComponent.mass + otherPhysicsComponent.mass);
+
+                GLfloat v1tAfter = v1t;
+                GLfloat v2tAfter = v2t;
+
+                velocities[ID] += v1nAfter * normalDirection + v1tAfter * tangentDirection;
+                velocities[otherID] += v2nAfter * normalDirection + v2tAfter * tangentDirection;
+
+                hasCollided[ID] = true;
+                hasCollided[otherID] = true;
+            }
+        }        
+    }
+    
+    for (GLuint ID = 0; ID < physicsComponents.size(); ID++)
+    {       
+        if (hasCollided[ID])
+        {
+            PhysicsComponent & physicsComponent = physicsComponents[ID];
+            physicsComponent.velocity = velocities[ID];
+        }
+    }
+
+    return;
 }

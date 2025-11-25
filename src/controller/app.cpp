@@ -262,7 +262,14 @@ RenderComponent App::load_scene(const char* path, unsigned int shader) {
 	}
 
 	GLuint N;
-	sceneFile >> N;
+	GLfloat length_scale, mass_scale, time_scale, G;
+	sceneFile >> N >> length_scale >> mass_scale >> time_scale >> G;
+	if (DEBUG) {
+		std::clog << "Scene Parameters: " << N << " particles, Length Scale: " << length_scale << ", Mass Scale: " << mass_scale << ", Time Scale: " << time_scale << ", G: " << G << '\n';
+	}
+
+	// Update Gravity Constant in Motion System
+	motionSystem->G = G;
 
 	RenderComponent sphereMesh = make_circle_mesh(1.0f, 34, shader);
 	sphereMesh.renderType = RenderType::INSTANCED;
@@ -271,25 +278,24 @@ RenderComponent App::load_scene(const char* path, unsigned int shader) {
 	particlesTranform.resize(N);
 	particlesPhysics.resize(N);
 	
-	GLfloat density = 1.0f;
 	for (GLuint i = 0; i < N; i++) {
-		GLfloat x, y, z = 0.0f;
-		sceneFile >> x >> y;
+		GLfloat x, y, z;
+		sceneFile >> x >> y >> z;
 
-		GLfloat vx, vy, vz = 0.0f;
-		sceneFile >> vx >> vy;
+		GLfloat vx, vy, vz;
+		sceneFile >> vx >> vy >> vz;
 
 		GLfloat mass;
-		sceneFile >> mass;
+		GLfloat radius;
+		GLfloat scale_factor;
+		sceneFile >> mass >> radius >> scale_factor;
 
-		GLfloat radius = glm::sqrt(mass / (glm::acos(-1) * density));
-
-		if (DEBUG) std::clog << "Particle " << i << ": Pos(" << x << ", " << y << ", " << z << "), Vel(" << vx << ", " << vy << ", " << vz << "), Mass: " << mass << ", Radius: " << radius << '\n';
+		if (DEBUG) std::clog << "Particle " << i << ": Pos(" << x << ", " << y << ", " << z << "), Vel(" << vx << ", " << vy << ", " << vz << "), Mass: " << mass << ", Radius: " << radius << ", Scale: " << scale_factor << '\n';
 
 		particlesTranform[i] = TransformComponent{
 			.position = glm::vec3(x, y, z),
 			.eulers = glm::vec3(0.0f),
-			.scale = glm::vec3(radius),
+			.scale = glm::vec3(radius*scale_factor),
 			.shearX = glm::vec2(0.0f),
 			.shearY = glm::vec2(0.0f),
 			.shearZ = glm::vec2(0.0f),
@@ -362,23 +368,20 @@ void App::run(std::string scenePath) {
 	};
 	if (DEBUG) std::clog << "Box Created" << '\n';
 
-	float dt = 16.67f/1000.0f;
-	float time = 0.0f;
-
-
 	while (!glfwWindowShouldClose(window))
 	{
-		motionSystem->update(particlesTranform, particlesPhysics, dt);
-		motionSystem->updateGravity(particlesTranform, particlesPhysics, dt);
+		motionSystem->update(particlesTranform, particlesPhysics, dt * 10.0f);
+		motionSystem->updateGravity(particlesTranform, particlesPhysics, dt * 10.0f);
+		motionSystem->updateColision(particlesTranform, particlesPhysics, dt * 10.0f);
 
-		cameraSystem->update2D(transformComponents, cameraID, cameraComponents, Shaders, dt);
+		cameraSystem->update2D(transformComponents, cameraID, cameraComponents, Shaders, input_dt);
 		renderSystem->uploadVertexInstanceData(renderComponents[particlesInstanceID], particlesTranform);
 		renderSystem->update(transformComponents, renderComponents, Shaders);
 
-		// if (DEBUG) std::clog << "CirclePos: " << circle.position << '\n';
-		// if (DEBUG) std::clog << "Camera Pos: " << transformComponents[cameraID].position << '\n';
-		// if (DEBUG) std::clog << "Window Side: " << Width << ", " << Height << '\n';
-		// if (DEBUG) std::clog << "Mouse Pos: " << mouse.x_pos << ", " << mouse.y_pos << '\n';
+		if (DEBUG) std::clog << "Frame Time: " << input_dt * 1000.0f << " ms" << '\n';
+		GLfloat currentFrame = glfwGetTime();
+		input_dt = currentFrame - time;
+		time = currentFrame;
 
 		mouse.updateMouseButton(window);
 		mouse.updateMousePosition(window);

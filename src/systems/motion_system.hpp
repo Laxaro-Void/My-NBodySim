@@ -15,4 +15,11 @@ class MotionSystem {
         std::vector<TransformComponent> &transformComponents,
         std::vector<PhysicsComponent> &physicsComponents,
         float dt);
+    
+    void updateColision(
+        std::vector<TransformComponent> &transformComponents,
+        std::vector<PhysicsComponent> &physicsComponents,
+        float dt);
+
+    GLfloat G;
 };

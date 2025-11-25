@@ -199,7 +199,7 @@ void CameraSystem::Inputs2D(
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
 		zoom += -speed;
-		zoom = glm::clamp(zoom, 0.5f, 10.0f);
+		zoom = std::max(zoom, 0.1f);
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{

@@ -61,6 +61,8 @@ public:
   // Controler
   int Width = 720;
   int Height = 1080;
+  GLfloat dt = 16.67f / 1000.0f;
+  GLfloat time = 0.0f;
 
   // Components
   unsigned int cameraID;
@@ -91,6 +93,7 @@ private:
   GLFWwindow* window;
 
   // Inputs
+  GLfloat input_dt = 16.67f / 1000.0f;
   struct Mouse
   {
     double x_pos, y_pos;
@@ -137,7 +140,6 @@ private:
   MotionSystem *motionSystem;
 
   // Kernels
-  
 };
 
 extern App* app;

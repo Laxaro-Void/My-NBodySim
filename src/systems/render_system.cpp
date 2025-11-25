@@ -11,7 +11,8 @@ void RenderSystem::update(
 	/*
 		Update and render all entities with TransformComponent and RenderComponent
 	*/
-	glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+	// glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+	glClearColor(0.00f, 0.00f, 0.00f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	for (std::pair<unsigned int, RenderComponent> entity : renderComponents)
