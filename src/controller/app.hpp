@@ -140,6 +140,14 @@ private:
   MotionSystem *motionSystem;
 
   // Kernels
+  int platform_id = 0;
+  int device_id = 0;
+
+  cl::Context context;
+  cl::CommandQueue queue;
+  void set_up_opencl();
+
+  cl::Program compileProgramFromFile(const char* filePath, cl::Context &context);
 };
 
 extern App* app;

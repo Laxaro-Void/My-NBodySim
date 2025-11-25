@@ -1,11 +1,10 @@
 #include "motion_system.hpp"
 
-void MotionSystem::update(
+void MotionSystem::updateCPU(
         std::vector<TransformComponent> &transformComponents,
         std::vector<PhysicsComponent> &physicsComponents,
         float dt)
 {
-
     for (GLuint ID = 0; ID < physicsComponents.size(); ++ID)
     {
         TransformComponent & trasnformComponent = transformComponents[ID];
@@ -15,6 +14,14 @@ void MotionSystem::update(
     }
     
     return;
+}
+
+void MotionSystem::updateGPU(
+        std::vector<TransformComponent> &transformComponents,
+        std::vector<PhysicsComponent> &physicsComponents,
+        float dt)
+{
+    
 }
 
 void MotionSystem::updateGravity(

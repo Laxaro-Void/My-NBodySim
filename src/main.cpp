@@ -19,7 +19,6 @@ int main (int argc, char *argv[]) {
       scenePath = argv[i+1];
     }
   }
-  
 
   app->run(scenePath);
 

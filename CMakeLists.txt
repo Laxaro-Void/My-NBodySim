@@ -40,3 +40,8 @@ target_link_libraries(Project
     glfw
     OpenGL::GL
 )
+
+target_link_libraries(Project
+    OpenCL::OpenCL
+)
+

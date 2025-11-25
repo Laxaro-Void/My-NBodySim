@@ -3,6 +3,7 @@
 
 App::App() {
 	set_up_glfw();
+	set_up_opencl();
 }
 
 App::~App() {
@@ -356,7 +357,7 @@ void App::run(std::string scenePath) {
 
 	// Create Bounding box
 	unsigned int boxEntity = make_entity();
-	renderComponents[boxEntity] = make_bounding_box(1200.0f, 600.0f, 3.0f, Shaders[1]);
+	renderComponents[boxEntity] = make_bounding_box(600.0f, 600.0f, 3.5f, Shaders[1]);
 	renderComponents[boxEntity].renderType = RenderType::STATIC;
 	transformComponents[boxEntity] = TransformComponent{
 		.position = glm::vec3(0.0f),
@@ -370,18 +371,26 @@ void App::run(std::string scenePath) {
 
 	while (!glfwWindowShouldClose(window))
 	{
-		motionSystem->update(particlesTranform, particlesPhysics, dt * 10.0f);
+		// Update Systems
+		GLfloat time_i = glfwGetTime();
+		motionSystem->updateCPU(particlesTranform, particlesPhysics, dt * 10.0f);
 		motionSystem->updateGravity(particlesTranform, particlesPhysics, dt * 10.0f);
 		motionSystem->updateColision(particlesTranform, particlesPhysics, dt * 10.0f);
+		GLfloat time_f = glfwGetTime();
+		// if (DEBUG) std::clog << "Physics Time: " << (time_f - time_i) * 1000.0f << " ms" << '\n';
 
+		// Render Systems
+		time_i = glfwGetTime();
 		cameraSystem->update2D(transformComponents, cameraID, cameraComponents, Shaders, input_dt);
 		renderSystem->uploadVertexInstanceData(renderComponents[particlesInstanceID], particlesTranform);
 		renderSystem->update(transformComponents, renderComponents, Shaders);
+		time_f = glfwGetTime();
+		// if (DEBUG) std::clog << "Render Time: " << (time_f - time_i) * 1000.0f << " ms" << '\n';
 
-		if (DEBUG) std::clog << "Frame Time: " << input_dt * 1000.0f << " ms" << '\n';
 		GLfloat currentFrame = glfwGetTime();
 		input_dt = currentFrame - time;
 		time = currentFrame;
+		// if (DEBUG) std::clog << "Frame Time: " << input_dt * 1000.0f << " ms" << '\n';
 
 		mouse.updateMouseButton(window);
 		mouse.updateMousePosition(window);
@@ -446,6 +455,33 @@ void App::set_up_opengl()
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
+}
+
+void App::set_up_opencl()
+{
+	if (DEBUG) {
+		std::clog << "Setting up OpenCL..." << '\n';
+	}
+  	// Query for platforms
+	std::vector<cl::Platform> platforms;
+	cl::Platform::get(&platforms);
+
+	// Get a list of devices on this platform
+	std::vector<cl::Device> devices;
+	// Select the platform.
+	platforms[platform_id].getDevices(CL_DEVICE_TYPE_GPU|CL_DEVICE_TYPE_CPU, &devices);
+
+	// Create a context
+	cl::Context context(devices);
+	this->context = context;
+    this->queue = cl::CommandQueue( context, devices[device_id] );
+
+	if (DEBUG) {
+		std::clog << context.getInfo<CL_CONTEXT_DEVICES>().size() << " devices found on platform " << platforms[platform_id].getInfo<CL_PLATFORM_NAME>() << '\n';
+		for (auto &device : context.getInfo<CL_CONTEXT_DEVICES>()) {
+			std::clog << " - " << device.getInfo<CL_DEVICE_NAME>() << '\n';
+		}
+	}
 }
 
 void App::make_systems() {

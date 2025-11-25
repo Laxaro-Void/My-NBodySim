@@ -1,9 +1,14 @@
 #define CL_TARGET_OPENCL_VERSION 120
+#define __CL_ENABLE_EXCEPTIONS
 
 // Glad, GLFW, OpenCl
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <CL/cl.h>
+#ifdef __APPLE__
+    #include <OpenCL/cl.hpp>
+#else
+    #include <openCL/cl.hpp>
+#endif
 
 // Stdc++
 #include <iostream>

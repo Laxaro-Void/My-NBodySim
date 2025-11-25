@@ -6,7 +6,12 @@
 class MotionSystem {
     public:
     
-    void update(
+    void updateCPU(
+        std::vector<TransformComponent> &transformComponents,
+        std::vector<PhysicsComponent> &physicsComponents,
+        float dt);
+    
+    void updateGPU(
         std::vector<TransformComponent> &transformComponents,
         std::vector<PhysicsComponent> &physicsComponents,
         float dt);
