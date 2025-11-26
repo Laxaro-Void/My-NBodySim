@@ -16,7 +16,10 @@ bool CameraSystem::update3D(
     glfwGetFramebufferSize(window, &width, &height);
     
     // Makes camera look in the right direction from the right position
-	cameraComponent.view = glm::lookAt(cameraTransformComponent.position, cameraTransformComponent.position + cameraTransformComponent.eulers, cameraComponent.up);
+	cameraComponent.view = glm::lookAt(
+		cl_float3_to_glm_vec3(cameraTransformComponent.position),
+		cl_float3_to_glm_vec3(cameraTransformComponent.position) + cl_float3_to_glm_vec3(cameraTransformComponent.eulers), 
+		cameraComponent.up);
 	// Adds perspective to the scene
 	cameraComponent.projection = glm::perspective(cameraComponent.FOV, (float(width) / float(height)), cameraComponent.nearPlane, cameraComponent.farPlane);
     
@@ -25,7 +28,7 @@ bool CameraSystem::update3D(
     for(unsigned int &shaderID : Shaders)
     {
         activate_shader(shaderID);
-        set_shader_Vec3(shaderID, "camPos", cameraTransformComponent.position);
+        set_shader_Vec3(shaderID, "camPos", cl_float3_to_glm_vec3(cameraTransformComponent.position));
         set_shader_Mat4(shaderID, "camMatrix", cameraMatrix);
     }
     
@@ -46,10 +49,11 @@ bool CameraSystem::update2D(
 	int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
-	GLfloat x = cameraTransformComponent.position.x;
-	GLfloat y = cameraTransformComponent.position.y;
+	GLfloat x = cameraTransformComponent.position.s[0];
+	GLfloat y = cameraTransformComponent.position.s[1];
 
-	cameraComponent.view = glm::lookAt(cameraTransformComponent.position, cameraTransformComponent.position + cameraTransformComponent.eulers, glm::vec3(0.0f, 1.0f, 0.0f));
+	cameraComponent.view = glm::lookAt(
+		cl_float3_to_glm_vec3(cameraTransformComponent.position), cl_float3_to_glm_vec3(cameraTransformComponent.position) + cl_float3_to_glm_vec3(cameraTransformComponent.eulers), glm::vec3(0.0f, 1.0f, 0.0f));
 	cameraComponent.projection = glm::ortho(x - float(width)/2.0f, x + float(width)/2.0f, y - float(height)/2.0f, y + float(height)/2.0f, 0.1f, 100.0f);
 
 	glm::mat4 zoomMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(cameraComponent.zoom));
@@ -59,7 +63,7 @@ bool CameraSystem::update2D(
 	for(unsigned int &shaderID : Shaders)
     {
         activate_shader(shaderID);
-        set_shader_Vec3(shaderID, "camPos", cameraTransformComponent.position);
+        set_shader_Vec3(shaderID, "camPos", cl_float3_to_glm_vec3(cameraTransformComponent.position));
         set_shader_Mat4(shaderID, "camMatrix", cameraMatrix);
     }
 
@@ -76,8 +80,8 @@ void CameraSystem::Inputs3D(
     TransformComponent &cameraTransformComponent = transformComponents[cameraID];
     CameraComponent &cameraComponent = cameraComponents[cameraID];
 
-    glm::vec3 &Position = cameraTransformComponent.position;
-    glm::vec3 &Orientation = cameraTransformComponent.eulers;
+    cl_float3 Position = cameraTransformComponent.position;
+    cl_float3 Orientation = cameraTransformComponent.eulers;
     glm::vec3 &Up = cameraComponent.up;
 
     bool &firstClick = cameraComponent.firstClick;
@@ -90,27 +94,27 @@ void CameraSystem::Inputs3D(
 	// Handles key inputs
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		Position += speed * Orientation;
+		Position = Position + speed * Orientation;
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		Position += speed * -glm::normalize(glm::cross(Orientation, Up)) * 0.5f;
+		Position = Position + glm_vec3_to_cl_float3(speed * -glm::normalize(glm::cross(cl_float3_to_glm_vec3(Orientation), Up)) * 0.5f);
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		Position += speed * -Orientation;
+		Position = Position + speed * (-1.0f) * Orientation;
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		Position += speed * glm::normalize(glm::cross(Orientation, Up)) * 0.5f;
+		Position = Position + glm_vec3_to_cl_float3(speed * glm::normalize(glm::cross(cl_float3_to_glm_vec3(Orientation), Up)) * 0.5f);
 	}
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
-		Position += speed * Up;
+		Position = Position + glm_vec3_to_cl_float3(speed * Up);
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 	{
-		Position += speed * -Up;
+		Position = Position + glm_vec3_to_cl_float3(speed * -Up);
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
@@ -147,17 +151,19 @@ void CameraSystem::Inputs3D(
 		float rotY = sensitivity * (mouseX - (width / 2)) / float(width);
 
 		// Calculates upcoming vertical change in the Orientation
-		glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, Up)));
+		glm::vec3 newOrientation = glm::rotate(
+			cl_float3_to_glm_vec3(Orientation), 
+			glm::radians(-rotX), 
+			glm::normalize(glm::cross(cl_float3_to_glm_vec3(Orientation), Up)));
 
 		// Decides whether or not the next vertical Orientation is legal or not
 		if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
 		{
-			Orientation = newOrientation;
+			Orientation = glm_vec3_to_cl_float3(newOrientation);
 		}
 
 		// Rotates the Orientation left and right
-		Orientation = glm::rotate(Orientation, glm::radians(-rotY), Up);
-
+		Orientation = glm_vec3_to_cl_float3(glm::rotate(cl_float3_to_glm_vec3(Orientation), glm::radians(-rotY), Up));
 		// Sets mouse cursor to the middle of the screen so that it doesn't end up roaming around
 		glfwSetCursorPos(window, (width / 2), (height / 2));
 	}
@@ -168,6 +174,9 @@ void CameraSystem::Inputs3D(
 		// Makes sure the next time the camera looks around it doesn't jump
 		firstClick = true;
 	}
+
+	cameraTransformComponent.position = Position;
+    cameraTransformComponent.eulers = Orientation;
 }
 
 void CameraSystem::Inputs2D(
@@ -179,8 +188,7 @@ void CameraSystem::Inputs2D(
 	TransformComponent &cameraTransformComponent = transformComponents[cameraID];
     CameraComponent &cameraComponent = cameraComponents[cameraID];
 
-    glm::vec3 &Position = cameraTransformComponent.position;
-    glm::vec3 &Orientation = cameraTransformComponent.eulers;
+    glm::vec3 Position = cl_float3_to_glm_vec3(cameraTransformComponent.position);
     glm::vec3 &Up = cameraComponent.up;
 
 	float &zoom = cameraComponent.zoom;
@@ -209,4 +217,6 @@ void CameraSystem::Inputs2D(
 	{
 		speed = 0.75f * dt;
 	}
+
+	cameraTransformComponent.position = glm_vec3_to_cl_float3(Position);
 }

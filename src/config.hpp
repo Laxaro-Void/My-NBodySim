@@ -42,3 +42,21 @@ extern bool DEBUG;
 // Special Operators
 std::ostream& operator <<(std::ostream& out, const glm::vec3 &v);
 std::ostream& operator <<(std::ostream& out, const glm::mat4 &v);
+
+// cl <-> glm Conversions
+glm::vec3 cl_float3_to_glm_vec3(const cl_float3 &v);
+cl_float3 glm_vec3_to_cl_float3(const glm::vec3 &v);
+glm::vec2 cl_float2_to_glm_vec2(const cl_float2 &v);
+cl_float2 glm_vec2_to_cl_float2(const glm::vec2 &v);
+
+// cl operations
+cl_float3 operator +(const cl_float3 &a, const cl_float3 &b);
+cl_float3 operator -(const cl_float3 &a, const cl_float3 &b);
+cl_float3 operator *(const cl_float3 &a, const cl_float3 &b);
+cl_float3 operator *(const float &b, const cl_float3 &a);
+cl_float3 operator /(const float &b, const cl_float3 &a);
+cl_float3 operator *(const cl_float3 &a, const float &b);
+cl_float3 operator /(const cl_float3 &a, const float &b);
+cl_float3 sqrt(const cl_float3 &a);
+float dot(const cl_float3 &a, const cl_float3 &b);
+float length(const cl_float3 &a);

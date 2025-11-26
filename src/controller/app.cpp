@@ -294,16 +294,16 @@ RenderComponent App::load_scene(const char* path, unsigned int shader) {
 		if (DEBUG) std::clog << "Particle " << i << ": Pos(" << x << ", " << y << ", " << z << "), Vel(" << vx << ", " << vy << ", " << vz << "), Mass: " << mass << ", Radius: " << radius << ", Scale: " << scale_factor << '\n';
 
 		particlesTranform[i] = TransformComponent{
-			.position = glm::vec3(x, y, z),
-			.eulers = glm::vec3(0.0f),
-			.scale = glm::vec3(radius*scale_factor),
-			.shearX = glm::vec2(0.0f),
-			.shearY = glm::vec2(0.0f),
-			.shearZ = glm::vec2(0.0f),
+			.position = {x, y, z},
+			.eulers = {0.0f, 0.0f, 0.0f},
+			.scale = {radius*scale_factor, radius*scale_factor, radius*scale_factor},
+			.shearX = {0.0f, 0.0f},
+			.shearY = {0.0f, 0.0f},
+			.shearZ = {0.0f, 0.0f},
 		};
 		particlesPhysics[i] = PhysicsComponent{
-			.velocity = glm::vec3(vx, vy, vz),
-			.acceleration = glm::vec3(0.0f),
+			.velocity = {vx, vy, vz},
+			.acceleration = {0.0f, 0.0f, 0.0f},
 			.mass = mass,
 			.radius = radius,
 		};
@@ -327,12 +327,12 @@ void App::run(std::string scenePath) {
 	// Create Camera Entity
 	cameraID = make_entity();
 	transformComponents[cameraID] = TransformComponent{
-		.position = glm::vec3(0.0f, 0.0f, 30.0f),
-		.eulers = glm::vec3(0.0f, 0.0f, -1.0f),
-		.scale = glm::vec3(1.0f),
-		.shearX = glm::vec2(0.0f),
-		.shearY = glm::vec2(0.0f),
-		.shearZ = glm::vec2(0.0f),
+		.position = {0.0f, 0.0f, 30.0f},
+		.eulers = {0.0f, 0.0f, -1.0f},
+		.scale = {1.0f, 1.0f, 1.0f},
+		.shearX = {0.0f, 0.0f},
+		.shearY = {0.0f, 0.0f},
+		.shearZ = {0.0f, 0.0f},
 	};
 	cameraComponents[cameraID] = CameraComponent{
 		.up = glm::vec3(0.0f, 0.5f, 0.0f),
@@ -360,12 +360,12 @@ void App::run(std::string scenePath) {
 	renderComponents[boxEntity] = make_bounding_box(600.0f, 600.0f, 3.5f, Shaders[1]);
 	renderComponents[boxEntity].renderType = RenderType::STATIC;
 	transformComponents[boxEntity] = TransformComponent{
-		.position = glm::vec3(0.0f),
-		.eulers = glm::vec3(0.0f),
-		.scale = glm::vec3(1.0f),
-		.shearX = glm::vec2(0.0f),
-		.shearY = glm::vec2(0.0f),
-		.shearZ = glm::vec2(0.0f),
+		.position = {0.0f, 0.0f, 0.0f},
+		.eulers = {0.0f, 0.0f, 0.0f},
+		.scale = {0.0f, 0.0f, 0.0f},
+		.shearX = {0.0f, 0.0f},
+		.shearY = {0.0f, 0.0f},
+		.shearZ = {0.0f, 0.0f},
 	};
 	if (DEBUG) std::clog << "Box Created" << '\n';
 

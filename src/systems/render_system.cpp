@@ -41,15 +41,22 @@ void RenderSystem::drawStatic(
 	glm::mat4 shrY = glm::mat4(1.0f);
 	glm::mat4 shrZ = glm::mat4(1.0f);
 
+	glm::vec3 position = cl_float3_to_glm_vec3(transform.position);
+	glm::vec3 eulers = cl_float3_to_glm_vec3(transform.eulers);
+	glm::vec3 scale = cl_float3_to_glm_vec3(transform.scale);
+	glm::vec2 shearX = glm::vec2(transform.shearX.s[0], transform.shearX.s[1]);
+	glm::vec2 shearY = glm::vec2(transform.shearY.s[0], transform.shearY.s[1]);
+	glm::vec2 shearZ = glm::vec2(transform.shearZ.s[0], transform.shearZ.s[1]);
+
 	// Transform the matrices to their correct form
-	trans = glm::translate(trans, transform.position);
-	rot = glm::rotate(rot, glm::radians(transform.eulers.x), {1.0f, 0.0f, 0.0f});
-	rot = glm::rotate(rot, glm::radians(transform.eulers.y), {0.0f, 1.0f, 0.0f});
-	rot = glm::rotate(rot, glm::radians(transform.eulers.z), {0.0f, 0.0f, 1.0f});
-	sca = glm::scale(sca, transform.scale);
-	shrX = glm::shearX3D(shrX, transform.shearX[0], transform.shearX[1]);
-	shrY = glm::shearY3D(shrX, transform.shearY[0], transform.shearY[1]);
-	shrZ = glm::shearZ3D(shrX, transform.shearZ[0], transform.shearZ[1]);
+	trans = glm::translate(trans, position);
+	rot = glm::rotate(rot, glm::radians(eulers.x), {1.0f, 0.0f, 0.0f});
+	rot = glm::rotate(rot, glm::radians(eulers.y), {0.0f, 1.0f, 0.0f});
+	rot = glm::rotate(rot, glm::radians(eulers.z), {0.0f, 0.0f, 1.0f});
+	sca = glm::scale(sca, scale);
+	shrX = glm::shearX3D(shrX, shearX.x, shearX.y);
+	shrY = glm::shearY3D(shrY, shearY.x, shearY.y);
+	shrZ = glm::shearZ3D(shrZ, shearZ.x, shearZ.y);
 
 	glm::mat4 model = matrix * trans * sca * shrX * shrY * shrZ;
 	glm::mat4 norm = glm::transpose(glm::inverse(matrix * rot * sca * shrX * shrY * shrZ));
@@ -127,15 +134,22 @@ void RenderSystem::uploadVertexInstanceData(RenderComponent &renderComponent, st
 		glm::mat4 shrY = glm::mat4(1.0f);
 		glm::mat4 shrZ = glm::mat4(1.0f);
 
+		glm::vec3 position = cl_float3_to_glm_vec3(transform.position);
+		glm::vec3 eulers = cl_float3_to_glm_vec3(transform.eulers);
+		glm::vec3 scale = cl_float3_to_glm_vec3(transform.scale);
+		glm::vec2 shearX = glm::vec2(transform.shearX.s[0], transform.shearX.s[1]);
+		glm::vec2 shearY = glm::vec2(transform.shearY.s[0], transform.shearY.s[1]);
+		glm::vec2 shearZ = glm::vec2(transform.shearZ.s[0], transform.shearZ.s[1]);
+
 		// Transform the matrices to their correct form
-		trans = glm::translate(trans, transform.position);
-		rot = glm::rotate(rot, glm::radians(transform.eulers.x), {1.0f, 0.0f, 0.0f});
-		rot = glm::rotate(rot, glm::radians(transform.eulers.y), {0.0f, 1.0f, 0.0f});
-		rot = glm::rotate(rot, glm::radians(transform.eulers.z), {0.0f, 0.0f, 1.0f});
-		sca = glm::scale(sca, transform.scale);
-		shrX = glm::shearX3D(shrX, transform.shearX[0], transform.shearX[1]);
-		shrY = glm::shearY3D(shrX, transform.shearY[0], transform.shearY[1]);
-		shrZ = glm::shearZ3D(shrX, transform.shearZ[0], transform.shearZ[1]);
+		trans = glm::translate(trans, position);
+		rot = glm::rotate(rot, glm::radians(eulers.x), {1.0f, 0.0f, 0.0f});
+		rot = glm::rotate(rot, glm::radians(eulers.y), {0.0f, 1.0f, 0.0f});
+		rot = glm::rotate(rot, glm::radians(eulers.z), {0.0f, 0.0f, 1.0f});
+		sca = glm::scale(sca, scale);
+		shrX = glm::shearX3D(shrX, shearX.x, shearX.y);
+		shrY = glm::shearY3D(shrY, shearY.x, shearY.y);
+		shrZ = glm::shearZ3D(shrZ, shearZ.x, shearZ.y);
 
 		glm::mat4 model = matrix * trans * sca * shrX * shrY * shrZ;
 		// glm::mat4 norm = glm::transpose(glm::inverse(matrix * rot * sca * shrX * shrY * shrZ));
@@ -189,15 +203,22 @@ void RenderSystem::updateVertexInstanceData(RenderComponent &renderComponent, st
 		glm::mat4 shrY = glm::mat4(1.0f);
 		glm::mat4 shrZ = glm::mat4(1.0f);
 
+		glm::vec3 position = cl_float3_to_glm_vec3(transform.position);
+		glm::vec3 eulers = cl_float3_to_glm_vec3(transform.eulers);
+		glm::vec3 scale = cl_float3_to_glm_vec3(transform.scale);
+		glm::vec2 shearX = glm::vec2(transform.shearX.s[0], transform.shearX.s[1]);
+		glm::vec2 shearY = glm::vec2(transform.shearY.s[0], transform.shearY.s[1]);
+		glm::vec2 shearZ = glm::vec2(transform.shearZ.s[0], transform.shearZ.s[1]);
+
 		// Transform the matrices to their correct form
-		trans = glm::translate(trans, transform.position);
-		rot = glm::rotate(rot, glm::radians(transform.eulers.x), {1.0f, 0.0f, 0.0f});
-		rot = glm::rotate(rot, glm::radians(transform.eulers.y), {0.0f, 1.0f, 0.0f});
-		rot = glm::rotate(rot, glm::radians(transform.eulers.z), {0.0f, 0.0f, 1.0f});
-		sca = glm::scale(sca, transform.scale);
-		shrX = glm::shearX3D(shrX, transform.shearX[0], transform.shearX[1]);
-		shrY = glm::shearY3D(shrX, transform.shearY[0], transform.shearY[1]);
-		shrZ = glm::shearZ3D(shrX, transform.shearZ[0], transform.shearZ[1]);
+		trans = glm::translate(trans, position);
+		rot = glm::rotate(rot, glm::radians(eulers.x), {1.0f, 0.0f, 0.0f});
+		rot = glm::rotate(rot, glm::radians(eulers.y), {0.0f, 1.0f, 0.0f});
+		rot = glm::rotate(rot, glm::radians(eulers.z), {0.0f, 0.0f, 1.0f});
+		sca = glm::scale(sca, scale);
+		shrX = glm::shearX3D(shrX, shearX.x, shearX.y);
+		shrY = glm::shearY3D(shrY, shearY.x, shearY.y);
+		shrZ = glm::shearZ3D(shrZ, shearZ.x, shearZ.y);
 
 		glm::mat4 model = matrix * trans * sca * shrX * shrY * shrZ;
 		// glm::mat4 norm = glm::transpose(glm::inverse(matrix * rot * sca * shrX * shrY * shrZ));
