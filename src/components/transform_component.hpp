@@ -1,8 +1,8 @@
 #pragma once
 #include "../config.hpp"
 
-struct alignas(16) TransformComponent {
-    cl_float3 position;
-    cl_float3 eulers;
-    cl_float3 scale;
+struct TransformComponent {
+    cl_float4 position;
+    cl_float4 eulers;
+    cl_float4 scale;
 };

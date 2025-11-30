@@ -57,13 +57,13 @@ kernel void collision_kernel(global TransformComponent * TransformComponents,
     float3 posA = TransformComponents[id].position;
     float radiusA = PhysicsComponents[id].radius;
     float massA = PhysicsComponents[id].mass;
-    float3 velA = PhysicsComponents[id].velocity;
+    float3 velA = PhysicsComponents[id].velocity.xyz;
 
     for (int j = id + 1; j < numEntities; j++) {
         float3 posB = TransformComponents[j].position;
         float radiusB = PhysicsComponents[j].radius;
         float massB = PhysicsComponents[j].mass;
-        float3 velB = PhysicsComponents[j].velocity;
+        float3 velB = PhysicsComponents[j].velocity.xyz;
 
         float3 dir = posB - posA;
         float dist = length(dir);
@@ -87,8 +87,8 @@ kernel void collision_kernel(global TransformComponent * TransformComponents,
             velA = vA_n_after * normal + vA_t_after * tangent;
             velB = vB_n_after * normal + vB_t_after * tangent;
 
-            PhysicsComponents[id].velocity = velA;
-            PhysicsComponents[j].velocity = velB;
+            PhysicsComponents[id].velocity = (float4)(velA[0], velA[1], velA[2], 0.0f);
+            PhysicsComponents[j].velocity = (float4)(velB[0], velB[1], velB[2], 0.0f);
         }
     }
 }
