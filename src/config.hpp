@@ -1,3 +1,5 @@
+#pragma once
+// OpenCL
 #define CL_TARGET_OPENCL_VERSION 120
 #define __CL_ENABLE_EXCEPTIONS
 
@@ -60,3 +62,6 @@ cl_float3 operator /(const cl_float3 &a, const float &b);
 cl_float3 sqrt(const cl_float3 &a);
 float dot(const cl_float3 &a, const cl_float3 &b);
 float length(const cl_float3 &a);
+
+// Kernel Global Config
+extern cl::NDRange local_threads;

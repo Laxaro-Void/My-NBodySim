@@ -5,23 +5,33 @@
 
 class MotionSystem {
     public:
+    void updateGPU(
+        cl::Buffer &transformComponents,
+        cl::Buffer &physicsComponents,
+        float dt, int N_particles, cl::Kernel &motionKernel, cl::CommandQueue &queue);
+        
+    void updateCollisionGPU(
+        cl::Buffer &transformComponents,
+        cl::Buffer &physicsComponents,
+        float dt, int N_particles, cl::Kernel &colisionKernel, cl::CommandQueue &queue);
+        
+    void updateGravityGPU(
+        cl::Buffer &transformComponents,
+        cl::Buffer &physicsComponents,
+        float dt, int N_particles, cl::Kernel &gravityKernel, cl::CommandQueue &queue);
     
     void updateCPU(
         std::vector<TransformComponent> &transformComponents,
         std::vector<PhysicsComponent> &physicsComponents,
         float dt);
     
-    void updateGPU(
+    void updateGravityCPU(
         std::vector<TransformComponent> &transformComponents,
         std::vector<PhysicsComponent> &physicsComponents,
         float dt);
 
-    void updateGravity(
-        std::vector<TransformComponent> &transformComponents,
-        std::vector<PhysicsComponent> &physicsComponents,
-        float dt);
     
-    void updateColision(
+    void updateCollisionCPU(
         std::vector<TransformComponent> &transformComponents,
         std::vector<PhysicsComponent> &physicsComponents,
         float dt);

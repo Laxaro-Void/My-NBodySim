@@ -1,7 +1,7 @@
 #include "app.hpp"
 
 
-App::App() {
+App::App(){
 	set_up_glfw();
 	set_up_opencl();
 }
@@ -296,10 +296,7 @@ RenderComponent App::load_scene(const char* path, unsigned int shader) {
 		particlesTranform[i] = TransformComponent{
 			.position = {x, y, z},
 			.eulers = {0.0f, 0.0f, 0.0f},
-			.scale = {radius*scale_factor, radius*scale_factor, radius*scale_factor},
-			.shearX = {0.0f, 0.0f},
-			.shearY = {0.0f, 0.0f},
-			.shearZ = {0.0f, 0.0f},
+			.scale = {radius*scale_factor, radius*scale_factor, radius*scale_factor}
 		};
 		particlesPhysics[i] = PhysicsComponent{
 			.velocity = {vx, vy, vz},
@@ -319,7 +316,10 @@ RenderComponent App::load_scene(const char* path, unsigned int shader) {
 	return sphereMesh;
 }
 
-void App::run(std::string scenePath) {
+void App::run(std::string scenePath, AppCalculationMode mode) {
+	// Set Calculation Mode
+	calculationMode = mode;
+
 	// Create Shader src/shaders/sphere.vert
 	Shaders.push_back(compile_shader("../src/shaders/sphere.vert", "../src/shaders/sphere.frag"));
 	Shaders.push_back(compile_shader("../src/shaders/standar.vert", "../src/shaders/standar.frag"));
@@ -329,10 +329,7 @@ void App::run(std::string scenePath) {
 	transformComponents[cameraID] = TransformComponent{
 		.position = {0.0f, 0.0f, 30.0f},
 		.eulers = {0.0f, 0.0f, -1.0f},
-		.scale = {1.0f, 1.0f, 1.0f},
-		.shearX = {0.0f, 0.0f},
-		.shearY = {0.0f, 0.0f},
-		.shearZ = {0.0f, 0.0f},
+		.scale = {1.0f, 1.0f, 1.0f}
 	};
 	cameraComponents[cameraID] = CameraComponent{
 		.up = glm::vec3(0.0f, 0.5f, 0.0f),
@@ -362,28 +359,115 @@ void App::run(std::string scenePath) {
 	transformComponents[boxEntity] = TransformComponent{
 		.position = {0.0f, 0.0f, 0.0f},
 		.eulers = {0.0f, 0.0f, 0.0f},
-		.scale = {0.0f, 0.0f, 0.0f},
-		.shearX = {0.0f, 0.0f},
-		.shearY = {0.0f, 0.0f},
-		.shearZ = {0.0f, 0.0f},
+		.scale = {0.0f, 0.0f, 0.0f}
 	};
 	if (DEBUG) std::clog << "Box Created" << '\n';
+
+	cl::Kernel motionKernel;
+	cl::Kernel gravityKernel;
+	cl::Kernel collisionKernel;
+	cl::Buffer bufferTranform;
+    cl::Buffer bufferPhysics;
+
+	if (calculationMode != AppCalculationMode::CPU_ONLY) {
+		try
+		{
+			/* code */
+		
+		if (DEBUG) std::clog << "Setting up OpenCL Kernels" << '\n';
+		compileProgramFromFile("../src/kernels/kPhysic_Kernel.cl", context);
+		if (DEBUG) std::clog << "OpenCL Programs Compiled" << '\n';
+
+		if (DEBUG) std::clog << "Compiling OpenCL Kernels" << '\n';
+		if (DEBUG) std::clog << "Compiling motion_kernel" << '\n';
+		motionKernel = compileKernel(programs[0], "motion_kernel");
+		if (DEBUG) std::clog << "Compiling gravity_kernel" << '\n';
+		gravityKernel = compileKernel(programs[0], "gravity_kernel");
+		if (DEBUG) std::clog << "Compiling collision_kernel" << '\n';
+		collisionKernel = compileKernel(programs[0], "collision_kernel");
+
+		if (DEBUG) std::clog << "OpenCL Kernels Compiled" << '\n';
+		bufferPhysics = cl::Buffer(context, CL_MEM_READ_WRITE, particlesPhysics.size() * sizeof(PhysicsComponent));
+		bufferTranform = cl::Buffer(context, CL_MEM_READ_WRITE, particlesTranform.size() * sizeof(TransformComponent));
+		queue.enqueueWriteBuffer( bufferPhysics, CL_TRUE, 0, particlesPhysics.size() * sizeof(PhysicsComponent), particlesPhysics.data() );	
+		}
+		catch(const cl::Error& e)
+		{
+			std::cerr << "OpenCL Error: " << e.what() << " returned " << e.err() << '\n';
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{
 		// Update Systems
 		GLfloat time_i = glfwGetTime();
-		motionSystem->updateCPU(particlesTranform, particlesPhysics, dt * 10.0f);
-		motionSystem->updateGravity(particlesTranform, particlesPhysics, dt * 10.0f);
-		motionSystem->updateColision(particlesTranform, particlesPhysics, dt * 10.0f);
+		if (calculationMode == AppCalculationMode::CPU_ONLY)
+		{
+			motionSystem->updateCPU(particlesTranform, particlesPhysics, dt * 10.0f);
+			motionSystem->updateGravityCPU(particlesTranform, particlesPhysics, dt * 10.0f);
+			motionSystem->updateCollisionCPU(particlesTranform, particlesPhysics, dt * 10.0f);
+		}
+		else if (calculationMode == AppCalculationMode::GPU_CPUCONTROLLER)
+		{
+			try
+			{
+			queue.enqueueWriteBuffer( bufferTranform, CL_TRUE, 0, particlesTranform.size() * sizeof(TransformComponent), particlesTranform.data() );
+			motionSystem->updateGPU(
+				bufferTranform,
+				bufferPhysics,
+				particlesTranform.size(),
+				dt * 10.0f,
+				motionKernel,
+				queue);
+			
+			// motionSystem->updateGravityGPU(
+			// 	bufferTranform,
+			// 	bufferPhysics,
+			// 	particlesTranform.size(),
+			// 	dt * 10.0f,
+			// 	gravityKernel,
+			// 	queue);
+			
+			// motionSystem->updateCollisionGPU(
+			// 	bufferTranform,
+			// 	bufferPhysics,
+			// 	particlesTranform.size(),
+			// 	dt * 10.0f,
+			// 	collisionKernel,
+			// 	queue);
+
+			queue.finish();
+			queue.enqueueReadBuffer( bufferTranform, CL_TRUE, 0, particlesTranform.size() * sizeof(TransformComponent), particlesTranform.data() );
+
+			if (DEBUG)
+			{
+				std::clog << "First Particle Position: (" 
+					<< particlesTranform[1].position.s[0] << ", " 
+					<< particlesTranform[1].position.s[1] << ", " 
+					<< particlesTranform[1].position.s[2] << ")\n";
+			}
+			
+
+			}
+			catch(const cl::Error& e)
+			{
+				std::cerr << "OpenCL Error: " << e.what() << " returned " << e.err() << '\n';
+				exit(EXIT_FAILURE);
+			}
+		}
+		
 		GLfloat time_f = glfwGetTime();
 		// if (DEBUG) std::clog << "Physics Time: " << (time_f - time_i) * 1000.0f << " ms" << '\n';
 
 		// Render Systems
 		time_i = glfwGetTime();
-		cameraSystem->update2D(transformComponents, cameraID, cameraComponents, Shaders, input_dt);
-		renderSystem->uploadVertexInstanceData(renderComponents[particlesInstanceID], particlesTranform);
-		renderSystem->update(transformComponents, renderComponents, Shaders);
+		if (calculationMode == AppCalculationMode::CPU_ONLY || calculationMode == AppCalculationMode::GPU_CPUCONTROLLER)
+		{
+			cameraSystem->update2D(transformComponents, cameraID, cameraComponents, Shaders, input_dt);
+			renderSystem->uploadVertexInstanceData(renderComponents[particlesInstanceID], particlesTranform);
+			renderSystem->update(transformComponents, renderComponents, Shaders);
+		}
 		time_f = glfwGetTime();
 		// if (DEBUG) std::clog << "Render Time: " << (time_f - time_i) * 1000.0f << " ms" << '\n';
 
@@ -474,6 +558,7 @@ void App::set_up_opencl()
 	// Create a context
 	cl::Context context(devices);
 	this->context = context;
+	this->devices = devices;
     this->queue = cl::CommandQueue( context, devices[device_id] );
 
 	if (DEBUG) {
@@ -482,6 +567,38 @@ void App::set_up_opencl()
 			std::clog << " - " << device.getInfo<CL_DEVICE_NAME>() << '\n';
 		}
 	}
+}
+
+void App::compileProgramFromFile(const char* filePath, cl::Context &context)
+{
+	std::ifstream sourceFile(filePath);
+	std::string sourceCode( std::istreambuf_iterator<char>(sourceFile), (std::istreambuf_iterator<char>()));
+	cl::Program::Sources source(1, std::make_pair(sourceCode.c_str(), sourceCode.length()));
+
+	// Make program from the source code
+	cl::Program program = cl::Program(context, source);
+
+	// Build program for these specific devices
+	try {
+		program.build(devices);
+	} catch (cl::Error &err) {
+		if (err.err() == CL_BUILD_PROGRAM_FAILURE) {
+			// Get the build log
+			for (auto &device : context.getInfo<CL_CONTEXT_DEVICES>()) {
+				std::string buildLog = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+				std::cerr << "Build log for " << device.getInfo<CL_DEVICE_NAME>() << ":\n" << buildLog << "\n";
+			}
+		}
+		throw err;
+	}
+
+	this->programs.push_back(program);
+}
+
+cl::Kernel App::compileKernel(cl::Program &program, const char* kernelName)
+{
+	cl::Kernel kernel(program, kernelName);
+	return kernel;
 }
 
 void App::make_systems() {

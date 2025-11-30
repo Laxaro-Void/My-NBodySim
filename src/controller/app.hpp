@@ -29,7 +29,7 @@ public:
   App();
   ~App();
 
-  void run(std::string scenePath);
+  void run(std::string scenePath, AppCalculationMode mode);
   unsigned int make_entity();
   void delete_entity(unsigned int ID);
   RenderComponent make_sphere_mesh(
@@ -143,11 +143,14 @@ private:
   int platform_id = 0;
   int device_id = 0;
 
+  std::vector<cl::Program> programs;
   cl::Context context;
+  std::vector<cl::Device> devices;
   cl::CommandQueue queue;
   void set_up_opencl();
 
-  cl::Program compileProgramFromFile(const char* filePath, cl::Context &context);
+  void compileProgramFromFile(const char* filePath, cl::Context &context);
+  cl::Kernel compileKernel(cl::Program &program, const char* kernelName);
 };
 
 extern App* app;

@@ -79,4 +79,7 @@ float length(const cl_float3 &a){
     return std::sqrtf(dot(a, a));
 }
 
+
+cl::NDRange local_threads( 256 );
+
 bool DEBUG = true;

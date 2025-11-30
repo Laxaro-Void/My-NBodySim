@@ -1,5 +1,45 @@
 #include "motion_system.hpp"
 
+void MotionSystem::updateGPU(
+        cl::Buffer &transformComponents,
+        cl::Buffer &physicsComponents,
+        float dt, int N_particles, cl::Kernel &motionKernel, cl::CommandQueue &queue)
+{
+    cl::NDRange global( N_particles );
+    motionKernel.setArg(0, transformComponents);
+    motionKernel.setArg(1, physicsComponents);
+    motionKernel.setArg(2, dt);
+    
+    queue.enqueueNDRangeKernel( motionKernel, cl::NullRange, global, local_threads );
+}
+
+void MotionSystem::updateCollisionGPU(
+    cl::Buffer &transformComponents,
+    cl::Buffer &physicsComponents,
+    float dt, int N_particles, cl::Kernel &colisionKernel, cl::CommandQueue &queue)
+{
+    cl::NDRange global( N_particles );
+    colisionKernel.setArg(0, transformComponents);
+    colisionKernel.setArg(1, physicsComponents);
+    colisionKernel.setArg(2, N_particles);
+    
+    queue.enqueueNDRangeKernel( colisionKernel, cl::NullRange, global, local_threads );
+}
+
+void MotionSystem::updateGravityGPU(
+    cl::Buffer &transformComponents,
+    cl::Buffer &physicsComponents,
+    float dt, int N_particles, cl::Kernel &gravityKernel, cl::CommandQueue &queue)
+    {
+    cl::NDRange global( N_particles );
+    gravityKernel.setArg(0, transformComponents);
+    gravityKernel.setArg(1, physicsComponents);
+    gravityKernel.setArg(2, G);
+    gravityKernel.setArg(3, N_particles);
+    
+    queue.enqueueNDRangeKernel( gravityKernel, cl::NullRange, global, local_threads );
+}
+
 void MotionSystem::updateCPU(
         std::vector<TransformComponent> &transformComponents,
         std::vector<PhysicsComponent> &physicsComponents,
@@ -18,15 +58,7 @@ void MotionSystem::updateCPU(
     return;
 }
 
-void MotionSystem::updateGPU(
-        std::vector<TransformComponent> &transformComponents,
-        std::vector<PhysicsComponent> &physicsComponents,
-        float dt)
-{
-    
-}
-
-void MotionSystem::updateGravity(
+void MotionSystem::updateGravityCPU(
     std::vector<TransformComponent> &transformComponents,
     std::vector<PhysicsComponent> &physicsComponents,
     float dt
@@ -73,7 +105,7 @@ void MotionSystem::updateGravity(
     }
 }
 
-void MotionSystem::updateColision(
+void MotionSystem::updateCollisionCPU(
         std::vector<TransformComponent> &transformComponents,
         std::vector<PhysicsComponent> &physicsComponents,
         float dt) 
