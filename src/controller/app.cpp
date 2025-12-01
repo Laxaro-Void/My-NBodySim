@@ -372,24 +372,23 @@ void App::run(std::string scenePath, AppCalculationMode mode) {
 	if (calculationMode != AppCalculationMode::CPU_ONLY) {
 		try
 		{
-			/* code */
 		
+		global_threads = ((particlesTranform.size() + local_threads - 1) / local_threads) * local_threads;
+
 		if (DEBUG) std::clog << "Setting up OpenCL Kernels" << '\n';
 		compileProgramFromFile("../src/kernels/kPhysic_Kernel.cl", context);
-		if (DEBUG) std::clog << "OpenCL Programs Compiled" << '\n';
 
 		if (DEBUG) std::clog << "Compiling OpenCL Kernels" << '\n';
-		if (DEBUG) std::clog << "Compiling motion_kernel" << '\n';
 		motionKernel = compileKernel(programs[0], "motion_kernel");
-		if (DEBUG) std::clog << "Compiling gravity_kernel" << '\n';
 		gravityKernel = compileKernel(programs[0], "gravity_kernel");
-		if (DEBUG) std::clog << "Compiling collision_kernel" << '\n';
 		collisionKernel = compileKernel(programs[0], "collision_kernel");
-
-		if (DEBUG) std::clog << "OpenCL Kernels Compiled" << '\n';
+		
+		if (DEBUG) std::clog << "Creating OpenCL Buffers" << '\n';
 		bufferPhysics = cl::Buffer(context, CL_MEM_READ_WRITE, particlesPhysics.size() * sizeof(PhysicsComponent));
 		bufferTranform = cl::Buffer(context, CL_MEM_READ_WRITE, particlesTranform.size() * sizeof(TransformComponent));
+		
 		queue.enqueueWriteBuffer( bufferPhysics, CL_TRUE, 0, particlesPhysics.size() * sizeof(PhysicsComponent), particlesPhysics.data() );	
+		queue.enqueueWriteBuffer( bufferTranform, CL_TRUE, 0, particlesTranform.size() * sizeof(TransformComponent), particlesTranform.data() );
 		}
 		catch(const cl::Error& e)
 		{
@@ -416,38 +415,29 @@ void App::run(std::string scenePath, AppCalculationMode mode) {
 			motionSystem->updateGPU(
 				bufferTranform,
 				bufferPhysics,
-				particlesTranform.size(),
 				dt * 10.0f,
+				particlesTranform.size(),
 				motionKernel,
 				queue);
 			
-			// motionSystem->updateGravityGPU(
-			// 	bufferTranform,
-			// 	bufferPhysics,
-			// 	particlesTranform.size(),
-			// 	dt * 10.0f,
-			// 	gravityKernel,
-			// 	queue);
+			motionSystem->updateGravityGPU(
+				bufferTranform,
+				bufferPhysics,
+				dt * 10.0f,
+				particlesTranform.size(),
+				gravityKernel,
+				queue);
 			
-			// motionSystem->updateCollisionGPU(
-			// 	bufferTranform,
-			// 	bufferPhysics,
-			// 	particlesTranform.size(),
-			// 	dt * 10.0f,
-			// 	collisionKernel,
-			// 	queue);
+			motionSystem->updateCollisionGPU(
+				bufferTranform,
+				bufferPhysics,
+				dt * 10.0f,
+				particlesTranform.size(),
+				collisionKernel,
+				queue);
 
 			queue.finish();
 			queue.enqueueReadBuffer( bufferTranform, CL_TRUE, 0, particlesTranform.size() * sizeof(TransformComponent), particlesTranform.data() );
-
-			if (DEBUG)
-			{
-				std::clog << "First Particle Position: (" 
-					<< particlesTranform[1].position.s[0] << ", " 
-					<< particlesTranform[1].position.s[1] << ", " 
-					<< particlesTranform[1].position.s[2] << ")\n";
-			}
-			
 
 			}
 			catch(const cl::Error& e)
@@ -458,7 +448,7 @@ void App::run(std::string scenePath, AppCalculationMode mode) {
 		}
 		
 		GLfloat time_f = glfwGetTime();
-		// if (DEBUG) std::clog << "Physics Time: " << (time_f - time_i) * 1000.0f << " ms" << '\n';
+		if (DEBUG) std::clog << "Physics Time: " << (time_f - time_i) * 1000.0f << " ms" << '\n';
 
 		// Render Systems
 		time_i = glfwGetTime();
@@ -469,12 +459,12 @@ void App::run(std::string scenePath, AppCalculationMode mode) {
 			renderSystem->update(transformComponents, renderComponents, Shaders);
 		}
 		time_f = glfwGetTime();
-		// if (DEBUG) std::clog << "Render Time: " << (time_f - time_i) * 1000.0f << " ms" << '\n';
+		if (DEBUG) std::clog << "Render Time: " << (time_f - time_i) * 1000.0f << " ms" << '\n';
 
 		GLfloat currentFrame = glfwGetTime();
 		input_dt = currentFrame - time;
 		time = currentFrame;
-		// if (DEBUG) std::clog << "Frame Time: " << input_dt * 1000.0f << " ms" << '\n';
+		if (DEBUG) std::clog << "Frame Time: " << input_dt * 1000.0f << " ms" << '\n';
 
 		mouse.updateMouseButton(window);
 		mouse.updateMousePosition(window);

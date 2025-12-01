@@ -80,6 +80,7 @@ float length(const cl_float3 &a){
 }
 
 
-cl::NDRange local_threads( 256 );
+size_t local_threads = 256;
+size_t global_threads = 1024;
 
 bool DEBUG = true;

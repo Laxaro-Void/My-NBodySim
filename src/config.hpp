@@ -64,4 +64,5 @@ float dot(const cl_float3 &a, const cl_float3 &b);
 float length(const cl_float3 &a);
 
 // Kernel Global Config
-extern cl::NDRange local_threads;
+extern size_t local_threads;
+extern size_t global_threads;

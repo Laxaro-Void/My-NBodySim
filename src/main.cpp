@@ -7,6 +7,9 @@ int main (int argc, char *argv[]) {
   app->set_up_opengl();
   app->make_systems();
 
+  static_assert(sizeof(TransformComponent) % 16 == 0, "TransformComponent size must be multiple of 16 bytes");
+  static_assert(sizeof(PhysicsComponent) % 16 == 0, "PhysicsComponent size must be multiple of 16 bytes");
+
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
 

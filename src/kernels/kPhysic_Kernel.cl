@@ -1,7 +1,7 @@
 typedef struct TransformComponent {
-    float3 position;
-    float3 eulers;
-    float3 scale;
+    float4 position;
+    float4 eulers;
+    float4 scale;
 } TransformComponent;
 
 typedef struct PhysicsComponent {
@@ -9,33 +9,38 @@ typedef struct PhysicsComponent {
     float4 acceleration;
     float mass;
     float radius;
+    float pad1;
+    float pad2;
 } PhysicsComponent;
 
 kernel void motion_kernel(global TransformComponent * TransformComponents,
                           global PhysicsComponent * PhysicsComponents,
-                          const float dt) {
+                          const float dt, const int numEntities) {
     
     int id = get_global_id(0);
-    PhysicsComponents[id].velocity[0] += PhysicsComponents[id].acceleration[0] * dt;
-    PhysicsComponents[id].velocity[1] += PhysicsComponents[id].acceleration[1] * dt;
-    PhysicsComponents[id].velocity[2] += PhysicsComponents[id].acceleration[2] * dt;
+    if (id >= numEntities) return;
 
-    TransformComponents[id].position[0] = TransformComponents[id].position[0] + PhysicsComponents[id].velocity[0] * dt;
-    TransformComponents[id].position[1] = TransformComponents[id].position[1] + PhysicsComponents[id].velocity[1] * dt;
-    TransformComponents[id].position[2] = TransformComponents[id].position[2] + PhysicsComponents[id].velocity[2] * dt;
+    PhysicsComponents[id].velocity[0] += PhysicsComponents[id].acceleration[0]*dt;
+    PhysicsComponents[id].velocity[1] += PhysicsComponents[id].acceleration[1]*dt;
+    PhysicsComponents[id].velocity[2] += PhysicsComponents[id].acceleration[2]*dt;
+
+    TransformComponents[id].position[0] += PhysicsComponents[id].velocity[0]*dt;
+    TransformComponents[id].position[1] += PhysicsComponents[id].velocity[1]*dt;
+    TransformComponents[id].position[2] += PhysicsComponents[id].velocity[2]*dt;
 }
 
 kernel void gravity_kernel(global TransformComponent * TransformComponents,
-                         global PhysicsComponent * PhysicsComponents,
-                         const float G,
-                         const int numEntities) {
+                            global PhysicsComponent * PhysicsComponents,
+                            const float G,
+                            const int numEntities) {
     
     int id = get_global_id(0);
-    float3 posA = TransformComponents[id].position;
-    float3 acc = (float3)(1.0f, 0.0f, 0.0f);
+    if (id >= numEntities) return;
+    float3 posA = TransformComponents[id].position.xyz;
+    float3 acc = (float3)(0.0f, 0.0f, 0.0f);
     
     for (int j = 0; j < numEntities; j++) {
-        float3 posB = TransformComponents[j].position;
+        float3 posB = TransformComponents[j].position.xyz;
         float3 dir = posB - posA;
         float distSqr = dot(dir, dir) + 1e-2f; // Avoid division by zero
         float dist = sqrt(distSqr);
@@ -54,13 +59,14 @@ kernel void collision_kernel(global TransformComponent * TransformComponents,
                             global PhysicsComponent * PhysicsComponents,
                             const int numEntities) {
     int id = get_global_id(0);
-    float3 posA = TransformComponents[id].position;
+    if (id >= numEntities) return;
+    float3 posA = TransformComponents[id].position.xyz;
     float radiusA = PhysicsComponents[id].radius;
     float massA = PhysicsComponents[id].mass;
     float3 velA = PhysicsComponents[id].velocity.xyz;
 
     for (int j = id + 1; j < numEntities; j++) {
-        float3 posB = TransformComponents[j].position;
+        float3 posB = TransformComponents[j].position.xyz;
         float radiusB = PhysicsComponents[j].radius;
         float massB = PhysicsComponents[j].mass;
         float3 velB = PhysicsComponents[j].velocity.xyz;

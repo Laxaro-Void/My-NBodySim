@@ -5,12 +5,14 @@ void MotionSystem::updateGPU(
         cl::Buffer &physicsComponents,
         float dt, int N_particles, cl::Kernel &motionKernel, cl::CommandQueue &queue)
 {
-    cl::NDRange global( N_particles );
+    cl::NDRange global( global_threads );
+    cl::NDRange local( local_threads );
     motionKernel.setArg(0, transformComponents);
     motionKernel.setArg(1, physicsComponents);
     motionKernel.setArg(2, dt);
+    motionKernel.setArg(3, N_particles);
     
-    queue.enqueueNDRangeKernel( motionKernel, cl::NullRange, global, local_threads );
+    queue.enqueueNDRangeKernel( motionKernel, cl::NullRange, global, local );
 }
 
 void MotionSystem::updateCollisionGPU(
@@ -18,26 +20,28 @@ void MotionSystem::updateCollisionGPU(
     cl::Buffer &physicsComponents,
     float dt, int N_particles, cl::Kernel &colisionKernel, cl::CommandQueue &queue)
 {
-    cl::NDRange global( N_particles );
+    cl::NDRange global( global_threads );
+    cl::NDRange local( local_threads );
     colisionKernel.setArg(0, transformComponents);
     colisionKernel.setArg(1, physicsComponents);
     colisionKernel.setArg(2, N_particles);
     
-    queue.enqueueNDRangeKernel( colisionKernel, cl::NullRange, global, local_threads );
+    queue.enqueueNDRangeKernel( colisionKernel, cl::NullRange, global, local );
 }
 
 void MotionSystem::updateGravityGPU(
     cl::Buffer &transformComponents,
     cl::Buffer &physicsComponents,
     float dt, int N_particles, cl::Kernel &gravityKernel, cl::CommandQueue &queue)
-    {
-    cl::NDRange global( N_particles );
+{
+    cl::NDRange global( global_threads );
+    cl::NDRange local( local_threads );
     gravityKernel.setArg(0, transformComponents);
     gravityKernel.setArg(1, physicsComponents);
     gravityKernel.setArg(2, G);
     gravityKernel.setArg(3, N_particles);
     
-    queue.enqueueNDRangeKernel( gravityKernel, cl::NullRange, global, local_threads );
+    queue.enqueueNDRangeKernel( gravityKernel, cl::NullRange, global, local );
 }
 
 void MotionSystem::updateCPU(
