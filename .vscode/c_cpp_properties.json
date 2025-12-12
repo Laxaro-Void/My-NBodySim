@@ -18,7 +18,8 @@
             "name": "Windows",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/msys64/ucrt64/include/GLFW"
+                "/msys64/ucrt64/include/GLFW",
+                "/msys64/ucrt64/include/CL"
             ],
             "defines": [],
             "cStandard": "c23",

@@ -5,6 +5,12 @@ project(Project VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 20)
 
 # Packages
+if(WIN32)
+    set(OpenCL_INCLUDE_DIR "C:/msys64/ucrt64/include")
+    set(OpenCL_LIBRARY "C:/msys64/ucrt64/lib/libOpenCL.dll.a")
+endif(WIN32)
+
+
 find_package(OpenGL REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(glfw3 REQUIRED)
@@ -44,4 +50,3 @@ target_link_libraries(Project
 target_link_libraries(Project
     OpenCL::OpenCL
 )
-
